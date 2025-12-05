@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router';
 import { AuthContext } from '../context';
-import { Col, Container, Row, Form, Button, Modal } from 'react-bootstrap';
+import { Col, Container, Row, Form, Button, Modal, InputGroup } from 'react-bootstrap';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupReEnterPassword, setSignupReEnterPassword] = useState('');
   const [modalShow, setModalShow] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -149,13 +150,19 @@ export default function LoginPage() {
             </Form.Group>
             <Form.Group className='mt-3 '>
               <Form.Label>Password</Form.Label>
-              <Form.Control
-                value={signupPassword}
-                placeholder='enter your password here'
-                type='password'
-                onChange={(e) => setSignupPassword(e.target.value)}
-                required
-              />
+              <InputGroup>
+                <Form.Control
+                  value={signupPassword}
+                  placeholder='enter your password here'
+                  type={showPassword ? 'text' : 'password'}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  required
+                />
+                <Button
+                  variant='outline-secondary'
+                  onClick={() => setShowPassword(!showPassword)}
+                >{showPassword ? <i class="bi bi-eye"></i> : <i class="bi bi-eye-slash"></i>}</Button>
+              </InputGroup>
 
               <Form.Text
                 className={error === 'invalid-password-pattern' ? 'text-danger' : ''}
