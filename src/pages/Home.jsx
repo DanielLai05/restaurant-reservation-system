@@ -22,7 +22,8 @@ export default function Home() {
   return (
     <div>
       <h1>Home</h1>
-      <Button onClick={handleLogout}>Logout</Button>
+      <Button onClick={handleLogout} className='mx-2'>Logout</Button>
+      <Button onClick={() => navigate('/payment')}>Make Payment</Button>
     </div>
   )
 }
