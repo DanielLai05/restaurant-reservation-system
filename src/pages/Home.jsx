@@ -1,73 +1,242 @@
-import React, { useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context';
-import { AppContext } from '../context/AppContext.jsx'; 
-import { Button, Container, Row, Col, Card, Badge } from 'react-bootstrap';
-import { auth } from '../firebase';
+// Home.jsx
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context";
+import { AppContext } from "../context/AppContext.jsx";
+import { auth } from "../firebase";
+
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Badge,
+  Button,
+  Form,
+  InputGroup,
+  Carousel,
+} from "react-bootstrap";
 
 import sushiImg from "../assets/restaurants/sushi.png";
 import pastaImg from "../assets/restaurants/pasta.png";
 import indianImg from "../assets/restaurants/indian.png";
 
 const restaurants = [
-  { id: 1, name: "Sushi Hana", cuisine: "Japanese", location: "KL", image: sushiImg },
-  { id: 2, name: "La Pasta", cuisine: "Italian", location: "PJ", image: pastaImg },
-  { id: 3, name: "Spice Route", cuisine: "Indian", location: "Subang Jaya", image: indianImg }
+  {
+    id: 1,
+    name: "Sushi Hana",
+    cuisine: "Japanese",
+    location: "KL",
+    image: sushiImg,
+    rating: 4.8,
+    popular: true,
+    discount: "10% Off",
+    priceRange: [20, 60],
+  },
+  {
+    id: 2,
+    name: "La Pasta",
+    cuisine: "Italian",
+    location: "PJ",
+    image: pastaImg,
+    rating: 4.3,
+    popular: false,
+    discount: null,
+    priceRange: [15, 50],
+  },
+  {
+    id: 3,
+    name: "Spice Route",
+    cuisine: "Indian",
+    location: "Subang Jaya",
+    image: indianImg,
+    rating: 4.6,
+    popular: true,
+    discount: "15% Off",
+    priceRange: [10, 40],
+  },
 ];
+
+const cuisines = ["All", "Japanese", "Italian", "Indian"];
+const locations = ["All", "KL", "PJ", "Subang Jaya"];
 
 export default function Home() {
   const { currentUser } = useContext(AuthContext);
   const { setSelectedRestaurant } = useContext(AppContext);
   const navigate = useNavigate();
 
+  const [search, setSearch] = useState("");
+  const [selectedCuisine, setSelectedCuisine] = useState("All");
+  const [selectedLocation, setSelectedLocation] = useState("All");
+  const [priceRange, setPriceRange] = useState([0, 100]);
+
   useEffect(() => {
-    if (!currentUser) {
-      navigate('/login');
-    }
+    if (!currentUser) navigate("/login");
   }, [currentUser, navigate]);
 
-  const handleLogout = () => {
-    auth.signOut();
+  const handleLogout = () => auth.signOut();
+
+  const handleSelectRestaurant = (r) => {
+    setSelectedRestaurant(r);
+    navigate(`/restaurant-details/${r.id}`);
   };
 
-  const handleSelectRestaurant = (restaurant) => {
-    setSelectedRestaurant(restaurant); 
-    navigate(`/restaurant-details/${restaurant.id}`); 
-  };
+  // 筛选逻辑
+  const filtered = restaurants.filter((r) => {
+    const matchesSearch =
+      r.name.toLowerCase().includes(search.toLowerCase()) ||
+      r.cuisine.toLowerCase().includes(search.toLowerCase()) ||
+      r.location.toLowerCase().includes(search.toLowerCase());
+
+    const matchesCuisine = selectedCuisine === "All" || r.cuisine === selectedCuisine;
+    const matchesLocation = selectedLocation === "All" || r.location === selectedLocation;
+    const matchesPrice =
+      r.priceRange[0] >= priceRange[0] && r.priceRange[1] <= priceRange[1];
+
+    return matchesSearch && matchesCuisine && matchesLocation && matchesPrice;
+  });
+
+  const recommended = restaurants.filter((r) => r.popular);
 
   return (
-    <Container className="my-5">
-      <h1>Home</h1>
-      <div className="mb-4">
-        <Button onClick={handleLogout} className="mx-2">Logout</Button>
-      </div>
+    <div style={{ backgroundColor: "#F1F3F6", minHeight: "100vh" }}>
+      <Container className="py-5">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h1 className="fw-bold">Discover Restaurants</h1>
+          <Button
+            style={{
+              background: "linear-gradient(90deg, #FF7E5F, #FEB47B)",
+              border: "none",
+            }}
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
+        </div>
 
-      <h2>Restaurants</h2>
-      <Row>
-        {restaurants.map((r) => (
-          <Col md={4} key={r.id}>
-            <Card
-              style={{ cursor: "pointer" }}
-              onClick={() => handleSelectRestaurant(r)}
-              className="mb-3 shadow-sm"
-            >
-              <div
-                style={{
-                  background: `url('${r.image}') center / cover no-repeat`,
-                  height: "150px",
-                  borderTopLeftRadius: "6px",
-                  borderTopRightRadius: "6px"
-                }}
+        {/* 推荐轮播 */}
+        {recommended.length > 0 && (
+          <Carousel className="mb-4 shadow-sm rounded">
+            {recommended.map((r) => (
+              <Carousel.Item key={r.id}>
+                <div
+                  style={{
+                    height: "250px",
+                    background: `url('${r.image}') center/cover no-repeat`,
+                    borderRadius: "12px",
+                  }}
+                />
+                <Carousel.Caption>
+                  <h5>{r.name}</h5>
+                  <p>{r.cuisine} • {r.location} • ⭐ {r.rating}</p>
+                </Carousel.Caption>
+              </Carousel.Item>
+            ))}
+          </Carousel>
+        )}
+
+        {/* 搜索 + 筛选 */}
+        <Row className="mb-4 g-2 align-items-center">
+          <Col md={4}>
+            <InputGroup>
+              <Form.Control
+                placeholder="Search by name, cuisine, location"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-              <Card.Body>
-                <Card.Title>{r.name}</Card.Title>
-                <Badge bg="secondary">{r.cuisine}</Badge>
-                <p className="text-muted">{r.location}</p>
-              </Card.Body>
-            </Card>
+              <Button variant="primary">Search</Button>
+            </InputGroup>
           </Col>
-        ))}
-      </Row>
-    </Container>
+          <Col md={2}>
+            <Form.Select
+              value={selectedCuisine}
+              onChange={(e) => setSelectedCuisine(e.target.value)}
+            >
+              {cuisines.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </Form.Select>
+          </Col>
+          <Col md={2}>
+            <Form.Select
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+            >
+              {locations.map((l) => (
+                <option key={l}>{l}</option>
+              ))}
+            </Form.Select>
+          </Col>
+          <Col md={4}>
+            <Form.Label>Price Range: ${priceRange[0]} - ${priceRange[1]}</Form.Label>
+            <Form.Range
+              min={0}
+              max={100}
+              value={priceRange[1]}
+              onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+            />
+          </Col>
+        </Row>
+
+        {/* 餐厅卡片 */}
+        <Row xs={1} sm={2} md={3} lg={4} className="g-4">
+          {filtered.map((r) => (
+            <Col key={r.id}>
+              <Card
+                className="h-100 border-0"
+                style={{
+                  cursor: "pointer",
+                  borderRadius: "12px",
+                  transition: "transform 0.25s, box-shadow 0.25s",
+                }}
+                onClick={() => handleSelectRestaurant(r)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.03)";
+                  e.currentTarget.style.boxShadow = "0 6px 18px rgba(0,0,0,0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.08)";
+                }}
+              >
+                <div
+                  style={{
+                    background: `url('${r.image}') center/cover no-repeat`,
+                    height: "180px",
+                    borderTopLeftRadius: "12px",
+                    borderTopRightRadius: "12px",
+                  }}
+                />
+                <Card.Body className="bg-white rounded-bottom shadow-sm">
+                  <Card.Title className="fw-bold">{r.name}</Card.Title>
+                  <div className="mb-1">
+                    <Badge bg="info" className="me-1">{r.cuisine}</Badge>
+                    <span className="text-muted small">{r.location}</span>
+                  </div>
+                  <div className="mb-1">
+                    <span className="text-warning">⭐ {r.rating}</span>{" "}
+                    {r.popular && <Badge bg="danger">Popular</Badge>}{" "}
+                    {r.discount && <Badge bg="success">{r.discount}</Badge>}
+                  </div>
+                  <Button
+                    style={{
+                      background: "linear-gradient(90deg, #FF7E5F, #FEB47B)",
+                      border: "none",
+                    }}
+                    size="sm"
+                  >
+                    View Details
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+
+        {filtered.length === 0 && (
+          <p className="text-center text-muted mt-5">No restaurants found.</p>
+        )}
+      </Container>
+    </div>
   );
 }

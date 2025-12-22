@@ -1,5 +1,6 @@
+// StaffDashboard.jsx
 import React from "react";
-import { Container, Card, Button, Row, Col, Table } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, ListGroup, Badge } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 export default function StaffDashboard() {
@@ -15,74 +16,72 @@ export default function StaffDashboard() {
     { id: 2, customer: "Bob", date: "2025-12-22", time: "19:00", partySize: 2, status: "Pending" },
   ];
 
-  return (
-    <Container className="my-5">
-      <h2>Staff Dashboard</h2>
+  const statusBadge = (status) => {
+    switch (status) {
+      case "Pending":
+        return <Badge bg="warning">{status}</Badge>;
+      case "Confirmed":
+        return <Badge bg="success">{status}</Badge>;
+      case "Completed":
+        return <Badge bg="secondary">{status}</Badge>;
+      default:
+        return <Badge bg="light">{status}</Badge>;
+    }
+  };
 
-      <Row className="mb-4">
-        <Col md={6}>
-          <Card className="shadow">
-            <Card.Header>
-              <h5>Today's Orders</h5>
-            </Card.Header>
-            <Card.Body>
-              <Table striped bordered hover size="sm">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todayOrders.map(order => (
-                    <tr key={order.id}>
-                      <td>{order.id}</td>
-                      <td>{order.customer}</td>
-                      <td>${order.total.toFixed(2)}</td>
-                      <td>{order.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-              <Button variant="primary" onClick={() => navigate("/staff/orders")}>Manage Orders</Button>
-            </Card.Body>
+  return (
+    <Container className="my-4">
+      <h2 className="mb-4">Staff Dashboard</h2>
+
+      <Row className="g-4">
+        {/* Orders Summary Card */}
+        <Col md={4}>
+          <Card className="shadow-sm p-3">
+            <Card.Title>Today's Orders</Card.Title>
+            <Card.Text className="display-6">{todayOrders.length}</Card.Text>
+            <Button variant="primary" className="w-100 mb-2" onClick={() => navigate("/staff/orders")}>
+              Manage Orders
+            </Button>
+            <ListGroup variant="flush">
+              {todayOrders.map((o) => (
+                <ListGroup.Item key={o.id} className="d-flex justify-content-between align-items-center">
+                  {o.customer}
+                  {statusBadge(o.status)}
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
           </Card>
         </Col>
 
-        <Col md={6}>
-          <Card className="shadow">
-            <Card.Header>
-              <h5>Today's Reservations</h5>
-            </Card.Header>
-            <Card.Body>
-              <Table striped bordered hover size="sm">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Party Size</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todayReservations.map(res => (
-                    <tr key={res.id}>
-                      <td>{res.id}</td>
-                      <td>{res.customer}</td>
-                      <td>{res.date}</td>
-                      <td>{res.time}</td>
-                      <td>{res.partySize}</td>
-                      <td>{res.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-              <Button variant="primary" onClick={() => navigate("/staff/reservations")}>Manage Reservations</Button>
-            </Card.Body>
+        {/* Reservations Summary Card */}
+        <Col md={4}>
+          <Card className="shadow-sm p-3">
+            <Card.Title>Today's Reservations</Card.Title>
+            <Card.Text className="display-6">{todayReservations.length}</Card.Text>
+            <Button variant="primary" className="w-100 mb-2" onClick={() => navigate("/staff/reservations")}>
+              Manage Reservations
+            </Button>
+            <ListGroup variant="flush">
+              {todayReservations.map((r) => (
+                <ListGroup.Item key={r.id} className="d-flex justify-content-between align-items-center">
+                  {r.customer} ({r.partySize})
+                  {statusBadge(r.status)}
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          </Card>
+        </Col>
+
+        {/* Quick Actions Card */}
+        <Col md={4}>
+          <Card className="shadow-sm p-3">
+            <Card.Title>Quick Actions</Card.Title>
+            <Button variant="success" className="w-100 mb-2" onClick={() => navigate("/staff/orders")}>
+              New Order
+            </Button>
+            <Button variant="info" className="w-100 mb-2" onClick={() => navigate("/staff/reservations")}>
+              New Reservation
+            </Button>
           </Card>
         </Col>
       </Row>

@@ -1,3 +1,4 @@
+// AdminDashboard.jsx
 import React, { useState } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -27,7 +28,10 @@ export default function AdminDashboard() {
             <Card.Body>
               <Card.Title>Total Restaurants</Card.Title>
               <h3>{restaurants.length}</h3>
-              <Button variant="primary" onClick={() => navigate("/admin/restaurants")}>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/admin/restaurants")}
+              >
                 Manage Restaurants
               </Button>
             </Card.Body>
@@ -38,7 +42,10 @@ export default function AdminDashboard() {
             <Card.Body>
               <Card.Title>Total Orders</Card.Title>
               <h3>{orders.length}</h3>
-              <Button variant="primary" onClick={() => navigate("/admin/orders")}>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/admin/orders")}
+              >
                 View Orders
               </Button>
             </Card.Body>
@@ -51,7 +58,10 @@ export default function AdminDashboard() {
           <Card className="text-center shadow">
             <Card.Body>
               <Card.Title>Staff Management</Card.Title>
-              <Button variant="primary" onClick={() => navigate("/admin/staff")}>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/admin/staff")}
+              >
                 Manage Staff
               </Button>
             </Card.Body>
