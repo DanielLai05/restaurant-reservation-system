@@ -1,4 +1,3 @@
-// src/pages/StaffLogin.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Card, Form, Button, Alert } from "react-bootstrap";
@@ -11,7 +10,6 @@ export default function StaffLogin() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // 测试用硬编码账号
     if (username === "staff" && password === "password123") {
       navigate("/staff/dashboard");
     } else {

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Container, Table, Button } from "react-bootstrap";
 
 export default function StaffOrders() {
-  // mock 数据
   const [orders, setOrders] = useState([
     { id: 1, customer: "Alice", items: "Sushi Roll x2", total: "$50", status: "Pending" },
     { id: 2, customer: "Bob", items: "Ramen x1", total: "$18", status: "Completed" },

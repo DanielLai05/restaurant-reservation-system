@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 export default function StaffDashboard() {
   const navigate = useNavigate();
 
-  // Mock 数据示例
   const todayOrders = [
     { id: 1, customer: "John Doe", total: 45.0, status: "Pending" },
     { id: 2, customer: "Jane Smith", total: 32.5, status: "Completed" },

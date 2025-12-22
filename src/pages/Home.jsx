@@ -1,17 +1,14 @@
-// src/pages/Home.jsx
 import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context';
-import { AppContext } from '../context/AppContext.jsx'; // 注意加 .jsx
+import { AppContext } from '../context/AppContext.jsx'; 
 import { Button, Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { auth } from '../firebase';
 
-// 餐厅图片（确保这些文件在 src/assets/restaurants/ 中）
 import sushiImg from "../assets/restaurants/sushi.png";
 import pastaImg from "../assets/restaurants/pasta.png";
 import indianImg from "../assets/restaurants/indian.png";
 
-// 餐厅列表
 const restaurants = [
   { id: 1, name: "Sushi Hana", cuisine: "Japanese", location: "KL", image: sushiImg },
   { id: 2, name: "La Pasta", cuisine: "Italian", location: "PJ", image: pastaImg },
@@ -23,7 +20,6 @@ export default function Home() {
   const { setSelectedRestaurant } = useContext(AppContext);
   const navigate = useNavigate();
 
-  // 如果用户没登录，跳转到 /login
   useEffect(() => {
     if (!currentUser) {
       navigate('/login');
@@ -35,8 +31,8 @@ export default function Home() {
   };
 
   const handleSelectRestaurant = (restaurant) => {
-    setSelectedRestaurant(restaurant); // 保存选中的餐厅
-    navigate(`/restaurant-details/${restaurant.id}`); // 跳转到餐厅详情页
+    setSelectedRestaurant(restaurant); 
+    navigate(`/restaurant-details/${restaurant.id}`); 
   };
 
   return (

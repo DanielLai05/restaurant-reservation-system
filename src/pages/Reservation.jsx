@@ -20,21 +20,17 @@ export default function Reservation() {
 
     console.log("Submitting reservation:", reservationData);
 
-    // 模拟确认并跳转到支付页面
     setTimeout(() => {
       alert(`Reservation confirmed for ${reservationData.partySize} people on ${reservationData.date} at ${reservationData.time}`);
 
-      // 传递数据到 HitPayCheckout
       navigate("/payment", { state: reservationData });
 
-      // 重置表单（可选）
       setDate("");
       setTime("");
       setPartySize(1);
     }, 500);
   };
 
-  // 获取今天日期，禁止选择过去的日期
   const today = new Date().toISOString().split("T")[0];
 
   return (

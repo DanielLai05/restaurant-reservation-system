@@ -1,4 +1,3 @@
-// src/pages/RestaurantDetails.jsx
 import React, { useContext } from "react";
 import { Container, Card, Button, Row, Col } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +6,6 @@ import { AppContext } from "../context/AppContext";
 import sushiRollImg from "../assets/menu/sushi-roll.png";
 import ramenImg from "../assets/menu/ramen.png";
 
-// 示例菜单
 const menuItems = [
   { id: 1, name: "Sushi Roll", price: 25, image: sushiRollImg },
   { id: 2, name: "Ramen", price: 18, image: ramenImg }
@@ -33,7 +31,6 @@ export default function RestaurantDetails() {
 
   return (
     <Container className="my-5">
-      {/* 餐厅信息 */}
       <Card className="mb-4 shadow-sm">
         <div
           style={{
@@ -49,11 +46,9 @@ export default function RestaurantDetails() {
         </Card.Body>
       </Card>
 
-      {/* 菜单列表 */}
       <h3>Menu</h3>
       <Row>
         {menuItems.map(item => {
-          // 获取当前 cart 中该菜品数量
           const cartItem = cart.find(c => c.id === item.id);
           const quantityInCart = cartItem ? cartItem.quantity : 0;
 

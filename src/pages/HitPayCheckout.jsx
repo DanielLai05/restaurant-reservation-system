@@ -13,7 +13,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { AppContext } from '../context/AppContext';
 
 export default function HitPayCheckout() {
-  const { cart } = useContext(AppContext); // 从 context 获取购物车
+  const { cart } = useContext(AppContext); 
   const [formData, setFormData] = useState({
     amount: '',
     currency: 'SGD',
@@ -33,7 +33,6 @@ export default function HitPayCheckout() {
     });
   };
 
-  // 计算总金额并填入 amount
   useEffect(() => {
     if (cart && cart.length > 0) {
       const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -130,7 +129,7 @@ export default function HitPayCheckout() {
                       type="number"
                       name="amount"
                       value={formData.amount}
-                      readOnly // 金额不可更改
+                      readOnly 
                       placeholder="10.00"
                     />
                   </Form.Group>

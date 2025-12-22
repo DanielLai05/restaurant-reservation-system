@@ -2,7 +2,6 @@ import React from "react";
 import { Container, Table, Button } from "react-bootstrap";
 
 export default function StaffReservations() {
-  // Mock 数据
   const reservations = [
     { id: 1, customer: "Alice", date: "2025-12-22", time: "18:00", partySize: 4, status: "Confirmed" },
     { id: 2, customer: "Bob", date: "2025-12-22", time: "19:00", partySize: 2, status: "Pending" },
@@ -10,7 +9,6 @@ export default function StaffReservations() {
 
   const handleUpdateStatus = (id, newStatus) => {
     alert(`Reservation ${id} status updated to ${newStatus}`);
-    // 这里可以接真实 API 更新状态
   };
 
   return (

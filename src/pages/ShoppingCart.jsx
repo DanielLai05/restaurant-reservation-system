@@ -1,4 +1,3 @@
-// src/pages/ShoppingCart.jsx
 import React, { useContext } from "react";
 import { Container, Table, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +5,7 @@ import { AppContext } from "../context/AppContext";
 
 export default function ShoppingCart() {
   const navigate = useNavigate();
-  const { cart = [], clearCart } = useContext(AppContext); // 默认 []
+  const { cart = [], clearCart } = useContext(AppContext); 
 
   if (!cart || cart.length === 0) {
     return (

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Container, Card, Form, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -10,9 +10,9 @@ export default function AdminLogin() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError("");
 
-    // 简单示例：固定 admin 账号
-    if (email === "admin@platform.com" && password === "admin123") {
+    if (email === "admin@example.com" && password === "admin123") {
       navigate("/admin/dashboard");
     } else {
       setError("Invalid credentials");
@@ -20,34 +20,40 @@ export default function AdminLogin() {
   };
 
   return (
-    <Container className="my-5">
-      <Card className="shadow p-4">
-        <h3>Admin Login</h3>
-        {error && <Alert variant="danger">{error}</Alert>}
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Email</Form.Label>
-            <Form.Control
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Password</Form.Label>
-            <Form.Control
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </Form.Group>
-          <Button type="submit" className="w-100" variant="primary">
-            Login
-          </Button>
-        </Form>
-      </Card>
+    <Container className="py-5">
+      <Row className="justify-content-center">
+        <Col md={6}>
+          <Card>
+            <Card.Header className="bg-primary text-white">Admin Login</Card.Header>
+            <Card.Body>
+              {error && <Alert variant="danger">{error}</Alert>}
+              <Form onSubmit={handleSubmit}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Password</Form.Label>
+                  <Form.Control
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </Form.Group>
+                <Button type="submit" className="w-100" variant="primary">
+                  Login
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </Container>
   );
 }
