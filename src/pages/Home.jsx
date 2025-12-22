@@ -55,6 +55,17 @@ const restaurants = [
     discount: "15% Off",
     priceRange: [10, 40],
   },
+  {
+    id: 4,
+    name: "168 板面",
+    cuisine: "Chinese",
+    location: "Kepong",
+    image: 'https://lh3.googleusercontent.com/gps-cs-s/AG0ilSxPgdA97GBJgiopGu5o1yzgtJbJsLMGOOeKvhJK0FJ-ydO7ZWbYn2wPwEC3M4Q6N_ciIyBa8Adsgho2_1gS1zOe9sQW8qFxh4usb2YgfdewPS0dzR18uB-hv60Q9AE8W7RTtHTC=s1360-w1360-h1020-rw',
+    rating: 5.0,
+    popular: true,
+    discount: "15% Off",
+    priceRange: [10, 40],
+  },
 ];
 
 const cuisines = ["All", "Japanese", "Italian", "Indian"];
