@@ -1,88 +1,76 @@
 // Reservation.jsx
-import React, { useState } from "react";
-import { Container, Form, Button, Card, Row, Col } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export default function Reservation() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { restaurant, cart = [], table } = location.state || {};
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [partySize, setPartySize] = useState(1);
-  const navigate = useNavigate();
+  const [partySize, setPartySize] = useState(table?.seats || 1);
+
+  if (!restaurant || !table) {
+    return (
+      <div className="my-5 text-center">
+        <p>Please select a restaurant and table first.</p>
+        <button className="btn btn-primary" onClick={() => navigate("/home")}>
+          Back to Home
+        </button>
+      </div>
+    );
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    const reservationData = { date, time, partySize };
-    console.log("Submitting reservation:", reservationData);
-
-    setTimeout(() => {
-      alert(`Reservation confirmed for ${reservationData.partySize} people on ${reservationData.date} at ${reservationData.time}`);
-      navigate("/payment", { state: reservationData });
-      setDate("");
-      setTime("");
-      setPartySize(1);
-    }, 500);
+    alert(
+      `Reservation confirmed for ${partySize} people at ${restaurant.name} on ${date} ${time}`
+    );
+    navigate("/home");
   };
 
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <Container className="my-5">
-      <Card className="shadow-sm p-4" style={{ borderRadius: "16px", maxWidth: "600px", margin: "0 auto" }}>
-        <h2 className="mb-4 text-center">Reservation</h2>
-        <Form onSubmit={handleSubmit}>
-          <Row className="mb-3">
-            <Col>
-              <Form.Group>
-                <Form.Label>Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  value={date}
-                  min={today}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
-              </Form.Group>
-            </Col>
-            <Col>
-              <Form.Group>
-                <Form.Label>Time</Form.Label>
-                <Form.Control
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  required
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Party Size</Form.Label>
-            <Form.Control
-              type="number"
-              min={1}
-              value={partySize}
-              onChange={(e) => setPartySize(e.target.value)}
-              required
-            />
-          </Form.Group>
-
-          <Button
-            type="submit"
-            style={{
-              width: "100%",
-              background: "linear-gradient(90deg, #FF7E5F, #FEB47B)",
-              border: "none",
-              fontWeight: "600",
-              padding: "10px 0",
-              fontSize: "1.1rem",
-            }}
-          >
-            Confirm Reservation
-          </Button>
-        </Form>
-      </Card>
-    </Container>
+    <div className="container my-5">
+      <h3>Reservation at {restaurant.name}</h3>
+      <p>Table: {table.name}</p>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label>Date</label>
+          <input
+            type="date"
+            min={today}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+            className="form-control"
+          />
+        </div>
+        <div className="mb-3">
+          <label>Time</label>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            required
+            className="form-control"
+          />
+        </div>
+        <div className="mb-3">
+          <label>Party Size</label>
+          <input
+            type="number"
+            min={1}
+            value={partySize}
+            onChange={(e) => setPartySize(e.target.value)}
+            className="form-control"
+          />
+        </div>
+        <button type="submit" className="btn btn-success">
+          Confirm Reservation
+        </button>
+      </form>
+    </div>
   );
 }

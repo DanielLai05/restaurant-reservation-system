@@ -30,6 +30,8 @@ export default function RestaurantDetails() {
     );
   }
 
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   return (
     <Container className="py-5">
       {/* Restaurant Header */}
@@ -86,7 +88,7 @@ export default function RestaurantDetails() {
                 />
                 <Card.Body>
                   <h5 className="fw-bold">{item.name}</h5>
-                  <p className="mb-2">${item.price}</p>
+                  <p className="mb-2">RM {item.price}</p>
                   <p>In Cart: {quantityInCart}</p>
                   <Button
                     style={{
@@ -104,17 +106,26 @@ export default function RestaurantDetails() {
         })}
       </Row>
 
-      {/* Go to Cart */}
+      {/* Cart & Table Reservation */}
       <div className="text-center mt-4">
+        <Button
+          style={{ background: "linear-gradient(90deg,#FF7E5F,#FEB47B)", border: "none" }}
+          onClick={() => navigate("/table-reservation", { state: { restaurant: selectedRestaurant, cart } })}
+        >
+          Proceed to Table Reservation
+        </Button>
+
         <Button
           style={{
             background: "linear-gradient(90deg,#FF7E5F,#FEB47B)",
             border: "none",
-            padding: "0.6rem 2rem",
+            marginLeft: "10px",
           }}
-          onClick={() => navigate("/cart")}
+          onClick={() =>
+            navigate("/table-reservation", { state: { restaurant: selectedRestaurant, cart: [] } })
+          }
         >
-          Go to Cart ({cart.reduce((sum, c) => sum + c.quantity, 0)})
+          Book Table Only
         </Button>
       </div>
     </Container>

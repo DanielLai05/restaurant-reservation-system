@@ -9,6 +9,7 @@ import RestaurantDetails from "./pages/RestaurantDetails";
 import ShoppingCart from "./pages/ShoppingCart";
 import Reservation from "./pages/Reservation";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import VisualTableReservation from "./pages/VisualTableReservation.jsx";
 
 // Staff Portal
 import StaffLogin from "./pages/staff/StaffLogin";
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/reservation" element={<Reservation />} />
             <Route path="/payment" element={<HitPayCheckout />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/table-reservation" element={<VisualTableReservation />} />
 
             {/* Staff Portal */}
             <Route path="/staff/login" element={<StaffLogin />} />
