@@ -329,8 +329,8 @@ export default function VisualTableReservation() {
                         }
                       }}
                       style={{
-                        width: "160px",
-                        height: "160px",
+                        width: "220px",
+                        height: "220px",
                         borderRadius: "20px",
                         background: isDisabled 
                           ? "linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%)"
@@ -343,39 +343,39 @@ export default function VisualTableReservation() {
                         alignItems: "center",
                         cursor: isDisabled ? "not-allowed" : "pointer",
                         position: "relative",
-                        transition: "all 0.3s ease",
+                        transition: "box-shadow 0.3s ease, background 0.3s ease",
                         opacity: isDisabled ? 0.6 : 1,
-                        border: isSelected 
+                        border: isDisabled 
+                          ? "2px dashed #999" 
+                          : "2px solid #ddd",
+                        outline: isSelected 
                           ? "3px solid #FF6B4A" 
-                          : isDisabled 
-                            ? "2px dashed #999" 
-                            : "2px solid #ddd",
+                          : "none",
+                        outlineOffset: "-2px",
                         boxShadow: isSelected
                           ? "0 8px 20px rgba(255, 126, 95, 0.4)"
                           : isDisabled
                             ? "none"
                             : "0 4px 12px rgba(0,0,0,0.1)",
+                        overflow: "visible",
+                        boxSizing: "border-box",
                       }}
                       onMouseEnter={(e) => {
                         if (!isDisabled && !isSelected) {
-                          e.currentTarget.style.transform = "scale(1.08) translateY(-5px)";
                           e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.2)";
-                          e.currentTarget.style.border = "2px solid #FF7E5F";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (!isSelected) {
-                          e.currentTarget.style.transform = "scale(1)";
                           e.currentTarget.style.boxShadow = isDisabled ? "none" : "0 4px 12px rgba(0,0,0,0.1)";
-                          e.currentTarget.style.border = isDisabled ? "2px dashed #999" : "2px solid #ddd";
                         }
                       }}
                     >
                       {/* Table Top - Round Table Surface */}
                       <div
                         style={{
-                          width: "100px",
-                          height: "100px",
+                          width: "70px",
+                          height: "70px",
                           borderRadius: "50%",
                           background: isDisabled
                             ? "linear-gradient(135deg, #c5c5c5 0%, #a0a0a0 100%)"
@@ -398,7 +398,7 @@ export default function VisualTableReservation() {
                       >
                         <div style={{ 
                           fontWeight: "bold", 
-                          fontSize: "0.9rem",
+                          fontSize: "0.75rem",
                           color: isSelected ? "#FF7E5F" : isDisabled ? "#666" : "#333",
                           marginBottom: "2px",
                           zIndex: 3
@@ -406,7 +406,7 @@ export default function VisualTableReservation() {
                           {table.name}
                         </div>
                         <div style={{ 
-                          fontSize: "0.7rem", 
+                          fontSize: "0.65rem", 
                           color: isDisabled ? "#999" : "#666",
                           zIndex: 3
                         }}>
@@ -418,7 +418,11 @@ export default function VisualTableReservation() {
                       <div style={{ 
                         marginTop: "8px",
                         textAlign: "center",
-                        zIndex: 3
+                        zIndex: 3,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "3px"
                       }}>
                         <div style={{ 
                           fontSize: "0.75rem", 
@@ -431,20 +435,9 @@ export default function VisualTableReservation() {
                           <div style={{ 
                             fontSize: "0.65rem", 
                             color: "#d32f2f", 
-                            marginTop: "3px",
                             fontWeight: "bold",
                           }}>
                             ⚠ Too Small
-                          </div>
-                        )}
-                        {isSelected && (
-                          <div style={{ 
-                            fontSize: "0.7rem", 
-                            color: "#FF7E5F", 
-                            marginTop: "3px",
-                            fontWeight: "bold",
-                          }}>
-                            ✓ Selected
                           </div>
                         )}
                       </div>
@@ -453,10 +446,10 @@ export default function VisualTableReservation() {
                         // Calculate angle (starting from top, clockwise)
                         const angle = (360 / table.seats) * idx - 90; // -90 to place first chair at top
                         const rad = (angle * Math.PI) / 180;
-                        // Table size is 160px, center is 80px, chairs should be at edge, radius about 65px
-                        const centerX = 80; // 160px / 2
-                        const centerY = 80; // 160px / 2
-                        const radius = 65; // Distance from center to edge
+                        // Table size is 220px, center is 110px, table is 70px (radius 35px), chairs should be outside table
+                        const centerX = 110; // 220px / 2
+                        const centerY = 110; // 220px / 2
+                        const radius = 85; // Distance from center to chair position (table radius 35px + gap)
                         const iconSize = 18; // Icon size
                         
                         return (
