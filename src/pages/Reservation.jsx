@@ -2,9 +2,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Container, Form, Button, Card, Row, Col, Badge } from "react-bootstrap";
-import Navbar from "../components/Navbar";
-import { formatPrice } from "../utils/formatters";
-import { useToast, ToastProvider } from "../components/Toast";
 
 export default function Reservation() {
   const location = useLocation();
@@ -14,22 +11,18 @@ export default function Reservation() {
   const [time, setTime] = useState("");
   const [partySize, setPartySize] = useState(table?.seats || 1);
   const [seatNumber, setSeatNumber] = useState(table?.seatNumber || "");
-  const { showToast, removeToast, toasts } = useToast();
 
   if (!restaurant || !table) {
     return (
-      <>
-        <Navbar />
-        <Container className="my-5 text-center">
-          <p>Please select a restaurant and table first.</p>
-          <Button
-            style={{ background: "linear-gradient(90deg, #FF7E5F, #FEB47B)", border: "none" }}
-            onClick={() => navigate("/table-reservation")}
-          >
-            Back to Table Selection
-          </Button>
-        </Container>
-      </>
+      <Container className="my-5 text-center">
+        <p>Please select a restaurant and table first.</p>
+        <Button
+          style={{ background: "linear-gradient(90deg, #FF7E5F, #FEB47B)", border: "none" }}
+          onClick={() => navigate("/table-reservation")}
+        >
+          Back to Table Selection
+        </Button>
+      </Container>
     );
   }
 
@@ -45,26 +38,25 @@ export default function Reservation() {
       hasOrder: cart.length > 0,
     };
     
-    // Navigate to payment method selection
-    navigate("/payment-method", {
-      state: {
-        reservation: reservationDetails,
-        cart,
-        restaurant,
-        customer: {}
-      }
-    });
+    alert(
+      `Reservation confirmed!\n` +
+      `Restaurant: ${restaurant.name}\n` +
+      `Table: ${table.name}\n` +
+      `Seat Number: ${seatNumber}\n` +
+      `Date: ${date}\n` +
+      `Time: ${time}\n` +
+      `Party Size: ${partySize} people\n` +
+      `Order: ${cart.length > 0 ? "Yes" : "No"}`
+    );
+    navigate("/home");
   };
 
   const today = new Date().toISOString().split("T")[0];
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <>
-      <Navbar />
-      <ToastProvider toasts={toasts} removeToast={removeToast} />
-      <Container className="my-5">
-        <h3 className="mb-4">Reservation at {restaurant.name}</h3>
+    <Container className="my-5">
+      <h3 className="mb-4">Reservation at {restaurant.name}</h3>
       
       <Row>
         <Col md={8}>
@@ -145,24 +137,23 @@ export default function Reservation() {
               </Card.Header>
               <Card.Body>
                 {cart.map((item, idx) => (
-                    <div key={idx} className="mb-2">
-                      <div className="d-flex justify-content-between">
-                        <span>{item.name} x {item.quantity}</span>
-                        <span>{formatPrice(item.price * item.quantity)}</span>
-                      </div>
+                  <div key={idx} className="mb-2">
+                    <div className="d-flex justify-content-between">
+                      <span>{item.name} x {item.quantity}</span>
+                      <span>RM {(item.price * item.quantity).toFixed(2)}</span>
                     </div>
-                  ))}
+                  </div>
+                ))}
                 <hr />
                 <div className="d-flex justify-content-between fw-bold">
                   <span>Subtotal:</span>
-                  <span>{formatPrice(subtotal)}</span>
+                  <span>RM {subtotal.toFixed(2)}</span>
                 </div>
               </Card.Body>
             </Card>
           )}
         </Col>
       </Row>
-      </Container>
-    </>
+    </Container>
   );
 }

@@ -3,9 +3,6 @@ import React, { useContext, useState } from "react";
 import { Container, Card, Button, Row, Col, Badge, ListGroup, Offcanvas } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
-import Navbar from "../components/Navbar";
-import { formatPrice } from "../utils/formatters";
-import { useToast, ToastProvider } from "../components/Toast";
 
 import sushiRollImg from "../assets/menu/sushi-roll.png";
 import ramenImg from "../assets/menu/ramen.png";
@@ -22,7 +19,6 @@ export default function RestaurantDetails() {
   const navigate = useNavigate();
   const { selectedRestaurant, addToCart, cart, removeFromCart, updateCartQuantity, clearCart } = useContext(AppContext);
   const [showCart, setShowCart] = useState(false);
-  const { showToast, removeToast, toasts } = useToast();
 
   // Check if cart has items from a different restaurant
   const cartRestaurantId = cart.length > 0 
@@ -132,8 +128,6 @@ export default function RestaurantDetails() {
 
   return (
     <>
-      <Navbar />
-      <ToastProvider toasts={toasts} removeToast={removeToast} />
     <Container 
       fluid
       className="py-5 px-4" 
@@ -202,7 +196,7 @@ export default function RestaurantDetails() {
                 />
                 <Card.Body className="d-flex flex-column">
                   <h5 className="fw-bold mb-2">{item.name}</h5>
-                  <p className="mb-2 text-primary fw-semibold fs-5">{formatPrice(item.price)}</p>
+                  <p className="mb-2 text-primary fw-semibold">RM {item.price.toFixed(2)}</p>
                   {quantityInCart > 0 && (
                     <p className="text-muted small mb-2">In Cart: {quantityInCart}</p>
                   )}
@@ -212,10 +206,7 @@ export default function RestaurantDetails() {
                       background: "linear-gradient(90deg,#FF7E5F,#FEB47B)",
                       border: "none",
                     }}
-                    onClick={() => {
-                      addToCart(item, 1);
-                      showToast(`${item.name} added to cart!`, "success");
-                    }}
+                    onClick={() => addToCart(item, 1)}
                   >
                     Add to Cart
                   </Button>
@@ -233,7 +224,7 @@ export default function RestaurantDetails() {
           <div className="mb-3 text-center">
             <h5 className="mb-2">Cart Summary</h5>
             <p className="text-muted mb-3">
-              {cart.length} {cart.length === 1 ? "item" : "items"} in cart • Total: {formatPrice(subtotal)}
+              {cart.length} {cart.length === 1 ? "item" : "items"} in cart • Total: RM {subtotal.toFixed(2)}
             </p>
             <Button
               variant="primary"
@@ -316,7 +307,7 @@ export default function RestaurantDetails() {
                     {item.name}
                   </div>
                   <div className="text-muted" style={{ fontSize: "0.85rem" }}>
-                    {formatPrice(item.price)}
+                    RM {item.price.toFixed(2)}
                   </div>
                 </div>
                 <Button
@@ -349,7 +340,7 @@ export default function RestaurantDetails() {
                   </Button>
                 </div>
                 <div className="fw-bold">
-                  {formatPrice(item.price * item.quantity)}
+                  RM {(item.price * item.quantity).toFixed(2)}
                 </div>
               </div>
             </ListGroup.Item>
@@ -359,7 +350,7 @@ export default function RestaurantDetails() {
         <div className="border-top pt-3">
           <div className="d-flex justify-content-between mb-3">
             <span className="fw-bold">Subtotal:</span>
-            <span className="fw-bold fs-5">{formatPrice(subtotal)}</span>
+            <span className="fw-bold fs-5">RM {subtotal.toFixed(2)}</span>
           </div>
           
           <Button

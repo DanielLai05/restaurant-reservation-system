@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Container, Form, Button, Row, Col, Card } from "react-bootstrap";
-import Navbar from "../components/Navbar";
-import { useToast, ToastProvider } from "../components/Toast";
 
 // Import restaurants list (should be from database in production)
 import sushiImg from "../assets/restaurants/sushi.png";
@@ -45,7 +43,6 @@ export default function VisualTableReservation() {
   const location = useLocation();
   const navigate = useNavigate();
   const { restaurant: initialRestaurant, cart = [] } = location.state || {};
-  const { showToast, removeToast, toasts } = useToast();
 
   // Step management: 1 = Personal Info, 2 = Restaurant & Table Selection
   const [step, setStep] = useState(1);
@@ -91,7 +88,7 @@ export default function VisualTableReservation() {
   const handlePersonalInfoSubmit = (e) => {
     e.preventDefault();
     if (!customerName || !customerPhone || !customerEmail || !pax || pax < 1) {
-      showToast("Please fill in all required fields.", "warning");
+      alert("Please fill in all required fields.");
       return;
     }
     setStep(2);
@@ -99,7 +96,7 @@ export default function VisualTableReservation() {
 
   const handleConfirm = () => {
     if (!selectedRestaurant || !selectedTable) {
-      showToast("Please select a restaurant and table.", "warning");
+      alert("Please select a restaurant and table.");
       return;
     }
     navigate("/reservation", { 
@@ -118,11 +115,8 @@ export default function VisualTableReservation() {
   };
 
   return (
-    <>
-      <Navbar />
-      <ToastProvider toasts={toasts} removeToast={removeToast} />
-      <Container className="my-5">
-        <h3 className="text-center mb-4">Visual Table Reservation</h3>
+    <Container className="my-5">
+      <h3 className="text-center mb-4">Visual Table Reservation</h3>
 
       {/* Step Indicator */}
       <div className="d-flex justify-content-center mb-4">
@@ -526,7 +520,6 @@ export default function VisualTableReservation() {
           </div>
         </>
       )}
-      </Container>
-    </>
+    </Container>
   );
 }
