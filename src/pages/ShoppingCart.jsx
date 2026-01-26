@@ -161,11 +161,11 @@ export default function ShoppingCart() {
                       if (cart.length > 0) {
                         // Get restaurant info from cart
                         const restaurantId = cart[0].restaurantId || (cart[0].id ? parseInt(cart[0].id.split('-')[0]) : null);
-                        navigate("/table-reservation", { 
-                          state: { 
+                        navigate("/reservation", {
+                          state: {
                             restaurant: restaurantId ? { id: restaurantId } : null,
-                            cart 
-                          } 
+                            cart
+                          }
                         });
                       }
                     }}

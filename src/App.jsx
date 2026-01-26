@@ -11,7 +11,7 @@ import ShoppingCart from "./pages/ShoppingCart";
 import Reservation from "./pages/Reservation";
 import PaymentMethod from "./pages/PaymentMethod";
 import OrderConfirmation from "./pages/OrderConfirmation";
-import VisualTableReservation from "./pages/VisualTableReservation.jsx";
+import MyReservations from "./pages/MyReservations";
 
 // Staff Portal
 import StaffLogin from "./pages/staff/StaffLogin";
@@ -46,7 +46,7 @@ export default function App() {
             <Route path="/payment-method" element={<PaymentMethod />} />
             <Route path="/payment" element={<HitPayCheckout />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
-            <Route path="/table-reservation" element={<VisualTableReservation />} />
+            <Route path="/my-reservations" element={<MyReservations />} />
 
             {/* Staff Portal */}
             <Route path="/staff/login" element={<StaffLogin />} />

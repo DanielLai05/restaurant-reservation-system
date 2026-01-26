@@ -1,47 +1,121 @@
 // RestaurantDetails.jsx
-import React, { useContext, useState } from "react";
-import { Container, Card, Button, Row, Col, Badge, ListGroup, Offcanvas } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import React, { useContext, useState, useEffect } from "react";
+import { Container, Card, Button, Row, Col, Badge, ListGroup, Spinner } from "react-bootstrap";
+import { useNavigate, useParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import Navbar from "../components/Navbar";
 import { formatPrice } from "../utils/formatters";
 import { useToast, ToastProvider } from "../components/Toast";
+import { menuAPI, restaurantAPI } from "../services/api";
+import { auth } from "../firebase";
 
-import sushiRollImg from "../assets/menu/sushi-roll.png";
-import ramenImg from "../assets/menu/ramen.png";
 import sushiImg from "../assets/restaurants/sushi.png";
 import pastaImg from "../assets/restaurants/pasta.png";
 import indianImg from "../assets/restaurants/indian.png";
 
-const menuItems = [
-  { id: 1, name: "Sushi Roll", price: 25, image: sushiRollImg },
-  { id: 2, name: "Ramen", price: 18, image: ramenImg },
-];
+// Get image for restaurant
+const getRestaurantImage = (restaurant) => {
+  if (restaurant.image_url) return restaurant.image_url;
+  
+  const name = (restaurant.name || '').toLowerCase();
+  if (name.includes('sushi') || name.includes('japanese')) {
+    return sushiImg;
+  } else if (name.includes('pasta') || name.includes('italian')) {
+    return pastaImg;
+  } else if (name.includes('indian') || name.includes('spice')) {
+    return indianImg;
+  }
+  
+  return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop&q=80';
+};
+
+// Default menu item image
+const getMenuItemImage = (item) => {
+  if (item.image_url) return item.image_url;
+  return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop&q=80';
+};
 
 export default function RestaurantDetails() {
   const navigate = useNavigate();
-  const { selectedRestaurant, addToCart, cart, removeFromCart, updateCartQuantity, clearCart } = useContext(AppContext);
-  const [showCart, setShowCart] = useState(false);
+  const { id } = useParams(); // Get restaurant ID from URL
+  const { selectedRestaurant, setSelectedRestaurant, cart, removeFromCart, updateCartQuantity, clearCart, addToCart } = useContext(AppContext);
   const { showToast, removeToast, toasts } = useToast();
+  const [showCart, setShowCart] = useState(false);
+
+  // Data states
+  const [categories, setCategories] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [restaurantData, setRestaurantData] = useState(null);
 
   // Check if cart has items from a different restaurant
   const cartRestaurantId = cart.length > 0 
     ? (cart[0].restaurantId || (cart[0].id ? parseInt(cart[0].id.split('-')[0]) : null))
     : null;
   
-  const isDifferentRestaurant = cartRestaurantId && cartRestaurantId !== selectedRestaurant?.id;
+  const isDifferentRestaurant = cartRestaurantId && restaurantData && cartRestaurantId !== parseInt(id);
 
-  if (!selectedRestaurant) {
+  // Fetch restaurant and menu data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      const restaurantId = parseInt(id);
+      if (!restaurantId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch restaurant, categories and items from API
+        const [restaurant, catsData, itemsData] = await Promise.all([
+          restaurantAPI.getById(restaurantId),
+          menuAPI.getCategories(restaurantId),
+          menuAPI.getItems(restaurantId)
+        ]);
+
+        if (restaurant) {
+          setRestaurantData(restaurant);
+          setSelectedRestaurant(restaurant);
+        }
+
+        if (catsData && catsData.length > 0) {
+          setCategories(catsData);
+        }
+        
+        if (itemsData && itemsData.length > 0) {
+          setMenuItems(itemsData);
+        }
+
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load restaurant. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, setSelectedRestaurant]);
+
+  // If no restaurant data found after loading
+  if (!loading && !restaurantData && !selectedRestaurant) {
     return (
-      <Container className="my-5 text-center">
-        <p>Please select a restaurant from Home page.</p>
-        <Button
-          style={{ background: "linear-gradient(90deg,#FF7E5F,#FEB47B)", border: "none" }}
-          onClick={() => navigate("/home")}
-        >
-          Back to Home
-        </Button>
-      </Container>
+      <>
+        <Navbar />
+        <Container className="my-5 text-center">
+          <h4>Restaurant not found</h4>
+          <p className="text-muted">Please select a restaurant from Home page.</p>
+          <Button
+            style={{ background: "linear-gradient(90deg,#FF7E5F,#FEB47B)", border: "none" }}
+            onClick={() => navigate("/home")}
+          >
+            Back to Home
+          </Button>
+        </Container>
+      </>
     );
   }
 
@@ -53,7 +127,7 @@ export default function RestaurantDetails() {
           <h4 className="alert-heading">Different Restaurant Detected!</h4>
           <p>
             You have items from another restaurant in your cart. 
-            Please clear your cart first to order from {selectedRestaurant.name}.
+            Please clear your cart first to order from {restaurantData?.name || selectedRestaurant?.name}.
           </p>
           <hr />
           <div className="d-flex justify-content-center gap-2">
@@ -77,58 +151,26 @@ export default function RestaurantDetails() {
     );
   }
 
+  const currentRestaurant = restaurantData || selectedRestaurant;
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Get menu items based on restaurant with unique food images
-  // Each item gets a unique ID: restaurantId-itemId to avoid conflicts
-  const getMenuItems = (restaurantId) => {
-    const createItem = (itemId, name, price, image) => ({
-      id: `${restaurantId}-${itemId}`, // Unique ID: restaurantId-itemId
-      name,
-      price,
-      image,
-      restaurantId, // Store restaurant ID for reference
-    });
-
-    switch(restaurantId) {
-      case 1: // Sushi Hana - Japanese
-        return [
-          createItem(1, "Salmon Sashimi", 35, "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&q=80"),
-          createItem(2, "Tuna Roll", 28, "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=400&h=300&fit=crop&q=80"),
-          createItem(3, "Dragon Roll", 42, "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&q=80"),
-          createItem(4, "Miso Soup", 12, "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop&q=80"),
-          createItem(5, "Tempura Udon", 32, "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop&q=80"),
-        ];
-      case 2: // La Pasta - Italian
-        return [
-          createItem(1, "Spaghetti Carbonara", 38, "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop&q=80"),
-          createItem(2, "Margherita Pizza", 45, "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop&q=80"),
-          createItem(3, "Lasagna", 42, "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400&h=300&fit=crop&q=80"),
-          createItem(4, "Caesar Salad", 25, "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=300&fit=crop&q=80"),
-        ];
-      case 3: // Spice Route - Indian
-        return [
-          createItem(1, "Butter Chicken", 28, "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop&q=80"),
-          createItem(2, "Biryani", 32, "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&h=300&fit=crop&q=80"),
-          createItem(3, "Naan Bread", 8, "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop&q=80"),
-          createItem(4, "Tandoori Chicken", 35, "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop&q=80"),
-        ];
-      case 4: // 168 Ban Mian - Chinese
-        return [
-          createItem(1, "Ban Mian (Handmade Noodles)", 12, "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop&q=80"),
-          createItem(2, "Dry Noodles", 14, "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop&q=80"),
-          createItem(3, "Wonton Noodles", 16, "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop&q=80"),
-          createItem(4, "Char Kway Teow", 15, "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop&q=80"),
-        ];
-      default:
-        return [
-          { id: "default-1", name: "Sushi Roll", price: 25, image: sushiRollImg, restaurantId: 0 },
-          { id: "default-2", name: "Ramen", price: 18, image: ramenImg, restaurantId: 0 },
-        ];
-    }
+  // Group items by category
+  const getItemsByCategory = (categoryName) => {
+    return menuItems.filter(item => item.category_name === categoryName);
   };
 
-  const menuItems = getMenuItems(selectedRestaurant?.id);
+  // Loading state
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <Container className="my-5 text-center">
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-3">Loading menu...</p>
+        </Container>
+      </>
+    );
+  }
 
   return (
     <>
@@ -145,87 +187,137 @@ export default function RestaurantDetails() {
     >
       <Row className="justify-content-center">
         <Col xl={11} xxl={10}>
+          {/* Error Alert */}
+          {error && (
+            <div className="alert alert-danger mb-4">
+              {error}
+              <Button variant="link" size="sm" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </div>
+          )}
+
           {/* Restaurant Header */}
           <Card className="mb-4 shadow-sm border-0 rounded-4 overflow-hidden">
             <div
               style={{
-                background: `url('${selectedRestaurant.image}') center / cover no-repeat`,
+                background: `url('${getRestaurantImage(currentRestaurant)}') center/cover no-repeat`,
                 height: "350px",
                 width: "100%",
               }}
             />
             <Card.Body className="text-center py-4">
-              <h2 className="fw-bold mb-2">{selectedRestaurant.name}</h2>
+              <h2 className="fw-bold mb-2">{currentRestaurant?.name}</h2>
               <p className="text-muted mb-3">
-                {selectedRestaurant.cuisine} • {selectedRestaurant.location}
+                {currentRestaurant?.cuisine_type || 'Various'} • {currentRestaurant?.address?.split(',')[0] || currentRestaurant?.location || 'View on map'}
               </p>
-              <div>
-                {selectedRestaurant.popular && <Badge bg="danger" className="me-2">Popular</Badge>}
-                {selectedRestaurant.discount && <Badge bg="success">{selectedRestaurant.discount}</Badge>}
-              </div>
+              <p className="text-muted small">
+                🕐 {currentRestaurant?.opening_time?.substring(0, 5) || '11:00'} - {currentRestaurant?.closing_time?.substring(0, 5) || '22:00'}
+              </p>
             </Card.Body>
           </Card>
 
-          {/* Menu */}
-          <div className="mb-4">
-            <h3 className="mb-4 fw-bold">Menu</h3>
-            <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-        {menuItems.map((item) => {
-          const cartItem = cart.find((c) => c.id === item.id);
-          const quantityInCart = cartItem ? cartItem.quantity : 0;
+          {/* Menu by Categories */}
+          {categories.length === 0 ? (
+            <div className="text-center py-5">
+              <p className="text-muted">No menu categories available.</p>
+            </div>
+          ) : menuItems.length === 0 ? (
+            <div className="text-center py-5">
+              <p className="text-muted">No menu items available yet.</p>
+            </div>
+          ) : (
+            categories.map((category) => {
+              const categoryItems = getItemsByCategory(category.category_name);
+              if (categoryItems.length === 0) return null;
 
-          return (
-            <Col key={item.id}>
-              <Card
-                className="h-100 border-0 shadow-sm"
-                style={{
-                  borderRadius: "16px",
-                  cursor: "pointer",
-                  transition: "transform 0.25s, box-shadow 0.25s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.03)";
-                  e.currentTarget.style.boxShadow = "0 10px 20px rgba(0,0,0,0.15)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.08)";
-                }}
-              >
-                <div
-                  style={{
-                    background: `url('${item.image}') center/cover no-repeat`,
-                    height: "180px",
-                    borderTopLeftRadius: "16px",
-                    borderTopRightRadius: "16px",
-                  }}
-                />
-                <Card.Body className="d-flex flex-column">
-                  <h5 className="fw-bold mb-2">{item.name}</h5>
-                  <p className="mb-2 text-primary fw-semibold fs-5">{formatPrice(item.price)}</p>
-                  {quantityInCart > 0 && (
-                    <p className="text-muted small mb-2">In Cart: {quantityInCart}</p>
-                  )}
-                  <Button
-                    className="mt-auto"
-                    style={{
-                      background: "linear-gradient(90deg,#FF7E5F,#FEB47B)",
-                      border: "none",
-                    }}
-                    onClick={() => {
-                      addToCart(item, 1);
-                      showToast(`${item.name} added to cart!`, "success");
-                    }}
-                  >
-                    Add to Cart
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
-          );
-            })}
-            </Row>
-          </div>
+              return (
+                <div key={category.id} className="mb-5">
+                  <h3 className="mb-4 fw-bold">{category.category_name}</h3>
+                  <Row xs={1} sm={2} md={3} lg={4} className="g-4">
+                    {categoryItems.map((item) => {
+                      const uniqueId = `${id}-${item.id}`;
+                      const cartItem = cart.find((c) => c.id === uniqueId);
+                      const quantityInCart = cartItem ? cartItem.quantity : 0;
+
+                      return (
+                        <Col key={item.id}>
+                          <Card
+                            className="h-100 border-0 shadow-sm"
+                            style={{
+                              borderRadius: "16px",
+                              cursor: "pointer",
+                              transition: "transform 0.25s, box-shadow 0.25s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "scale(1.03)";
+                              e.currentTarget.style.boxShadow = "0 10px 20px rgba(0,0,0,0.15)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "scale(1)";
+                              e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.08)";
+                            }}
+                          >
+                            <div
+                              style={{
+                                background: `url('${getMenuItemImage(item)}') center/cover no-repeat`,
+                                height: "180px",
+                                borderTopLeftRadius: "16px",
+                                borderTopRightRadius: "16px",
+                              }}
+                            />
+                            <Card.Body className="d-flex flex-column">
+                              <h5 className="fw-bold mb-2">{item.item_name}</h5>
+                              <p className="text-muted small mb-2" style={{ 
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden'
+                              }}>
+                                {item.description || ''}
+                              </p>
+                              <p className="mb-2 text-primary fw-semibold fs-5">{formatPrice(parseFloat(item.price))}</p>
+                              {quantityInCart > 0 && (
+                                <p className="text-muted small mb-2">In Cart: {quantityInCart}</p>
+                              )}
+                              <Button
+                                className="mt-auto"
+                                style={{
+                                  background: "linear-gradient(90deg,#FF7E5F,#FEB47B)",
+                                  border: "none",
+                                }}
+                                onClick={() => {
+                                  if (!auth.currentUser) {
+                                    showToast("Please login to add items to cart", "warning");
+                                    navigate("/login");
+                                    return;
+                                  }
+
+                                  const cartItemData = {
+                                    id: `${id}-${item.id}`,
+                                    name: item.item_name,
+                                    price: parseFloat(item.price),
+                                    image: getMenuItemImage(item),
+                                    restaurantId: parseInt(id),
+                                    description: item.description
+                                  };
+
+                                  addToCart(cartItemData, 1);
+                                  showToast(`${item.item_name} added to cart!`, "success");
+                                }}
+                              >
+                                Add to Cart
+                              </Button>
+                            </Card.Body>
+                          </Card>
+                        </Col>
+                      );
+                    })}
+                  </Row>
+                </div>
+              );
+            })
+          )}
 
           {/* Cart & Table Reservation */}
           <div className="mt-5">
@@ -244,7 +336,7 @@ export default function RestaurantDetails() {
             </Button>
             <Button
               variant="success"
-              onClick={() => navigate("/table-reservation", { state: { restaurant: selectedRestaurant, cart } })}
+              onClick={() => navigate("/reservation", { state: { restaurant: currentRestaurant, cart } })}
             >
               Proceed to Table Reservation
             </Button>
@@ -255,7 +347,7 @@ export default function RestaurantDetails() {
           <Button
             variant="outline-primary"
             onClick={() =>
-              navigate("/table-reservation", { state: { restaurant: selectedRestaurant, cart: [] } })
+              navigate("/reservation", { state: { restaurant: currentRestaurant, cart: [] } })
             }
           >
             Book Table Only
@@ -307,7 +399,7 @@ export default function RestaurantDetails() {
                     width: "60px",
                     height: "60px",
                     borderRadius: "8px",
-                    background: `url('${item.image}') center/cover no-repeat`,
+                    background: `url('${item.image || getMenuItemImage({})}') center/cover no-repeat`,
                     marginRight: "12px",
                   }}
                 />
@@ -377,8 +469,8 @@ export default function RestaurantDetails() {
             variant="success"
             className="w-100"
             onClick={() => {
-              navigate("/table-reservation", { 
-                state: { restaurant: selectedRestaurant, cart } 
+              navigate("/reservation", { 
+                state: { restaurant: currentRestaurant, cart } 
               });
             }}
           >

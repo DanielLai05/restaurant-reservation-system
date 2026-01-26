@@ -13,6 +13,97 @@ export default function PaymentMethod() {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const hasOrder = cart.length > 0;
 
+  // Helper to safely format date
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+
+    try {
+      // Handle ISO format with T and timezone (e.g., "2026-01-30T16:00:00.000Z")
+      let date;
+      if (typeof dateStr === 'string' && (dateStr.includes('T') || dateStr.includes('-'))) {
+        // Try to parse the date
+        date = new Date(dateStr);
+      } else {
+        date = new Date(dateStr);
+      }
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return dateStr;
+      }
+
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return dateStr;
+    }
+  };
+
+  // Helper to format time
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '-';
+
+    try {
+      // Handle different time formats
+      let hours, minutes;
+
+      // If time includes date (ISO format)
+      if (typeof timeStr === 'string' && timeStr.includes('T')) {
+        const date = new Date(timeStr);
+        hours = date.getHours();
+        minutes = date.getMinutes();
+      } else if (typeof timeStr === 'string' && timeStr.includes(':')) {
+        // Simple HH:MM or HH:MM:SS format
+        const parts = timeStr.split(':');
+        hours = parseInt(parts[0]);
+        minutes = parseInt(parts[1]);
+      } else {
+        return timeStr;
+      }
+
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const h12 = hours % 12 || 12;
+      const minStr = minutes.toString().padStart(2, '0');
+      return `${h12}:${minStr} ${ampm}`;
+    } catch (error) {
+      console.error('Time formatting error:', error);
+      return timeStr;
+    }
+  };
+
+  // Extract reservation info from either format
+  const getReservationInfo = () => {
+    if (!reservation) return null;
+
+    // Handle different data formats
+    if (reservation.reservation_date) {
+      // Database format (from API response)
+      return {
+        restaurant: reservation.restaurant_name || restaurant?.name || reservation.restaurant,
+        date: formatDate(reservation.reservation_date),
+        time: formatTime(reservation.reservation_time || reservation.time),
+        partySize: reservation.party_size || reservation.partySize,
+        table: reservation.table_id || reservation.table || '-'
+      };
+    }
+
+    // Local format (from navigation state - before API call)
+    return {
+      restaurant: reservation.restaurant || restaurant?.name,
+      date: formatDate(reservation.date),
+      time: formatTime(reservation.time),
+      partySize: reservation.partySize || '-',
+      table: reservation.table || '-'
+    };
+  };
+
+  const reservationInfo = getReservationInfo();
+
   const handlePaymentMethod = (method) => {
     const orderData = {
       reservation,
@@ -62,21 +153,36 @@ export default function PaymentMethod() {
                 )}
 
                 {/* Reservation Info */}
-                {reservation && (
+                {reservationInfo && (
                   <div className="mb-4 p-3 bg-light rounded">
                     <h5 className="mb-3">Reservation Details</h5>
-                    <p className="mb-1"><strong>Restaurant:</strong> {reservation.restaurant || restaurant?.name}</p>
-                    <p className="mb-1"><strong>Table:</strong> {reservation.table}</p>
-                    <p className="mb-1"><strong>Date:</strong> {reservation.date}</p>
-                    <p className="mb-1"><strong>Time:</strong> {reservation.time}</p>
-                    <p className="mb-0"><strong>Party Size:</strong> {reservation.partySize} people</p>
+                    <p className="mb-1">
+                      <i className="bi bi-shop me-2"></i>
+                      <strong>Restaurant:</strong> {reservationInfo.restaurant || '-'}
+                    </p>
+                    <p className="mb-1">
+                      <i className="bi bi-calendar-event me-2"></i>
+                      <strong>Date:</strong> {reservationInfo.date}
+                    </p>
+                    <p className="mb-1">
+                      <i className="bi bi-clock me-2"></i>
+                      <strong>Time:</strong> {reservationInfo.time}
+                    </p>
+                    <p className="mb-1">
+                      <i className="bi bi-people me-2"></i>
+                      <strong>Party Size:</strong> {reservationInfo.partySize} people
+                    </p>
+                    <p className="mb-0">
+                      <i className="bi bi-grid me-2"></i>
+                      <strong>Table:</strong> #{reservationInfo.table}
+                    </p>
                   </div>
                 )}
 
                 {/* Payment Methods */}
                 <div className="mb-4">
                   <h5 className="mb-4">Choose your payment method:</h5>
-                  
+
                   <Row className="g-3">
                     {/* Pay at Counter */}
                     <Col md={6}>
@@ -197,4 +303,3 @@ export default function PaymentMethod() {
     </>
   );
 }
-

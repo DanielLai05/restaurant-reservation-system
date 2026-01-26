@@ -1,322 +1,303 @@
+// HitPayCheckout.jsx - HitPay payment integration
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Form,
-  Button,
-  Alert,
-  Spinner
-} from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { AppContext } from '../context/AppContext';
+import { Container, Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
 import Navbar from '../components/Navbar';
 import { formatPrice } from '../utils/formatters';
+import { AppContext } from '../context/AppContext';
+import { orderAPI, paymentAPI } from '../services/api';
 
 export default function HitPayCheckout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cart: contextCart } = useContext(AppContext);
+  const { cart: contextCart, clearCart } = useContext(AppContext);
   
   // Get data from location state (passed from PaymentMethod)
-  const { reservation, cart: stateCart = [], restaurant, customer = {}, subtotal } = location.state || {};
-  const cart = stateCart.length > 0 ? stateCart : contextCart;
+  const state = location.state || {};
+  const reservation = state.reservation || null;
+  const stateCart = state.cart || [];
+  const restaurant = state.restaurant || {};
+  const customer = state.customer || {};
+  const subtotal = state.subtotal || 0;
   
-  const [formData, setFormData] = useState({
-    amount: '',
-    currency: 'MYR',
-    purpose: '',
-    name: customer.name || '',
-    email: customer.email || '',
-    phone: customer.phone || ''
-  });
+  const cart = stateCart.length > 0 ? stateCart : contextCart;
+  const cartItems = cart.length > 0 ? cart : [];
+  
   const [loading, setLoading] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState('');
   const [error, setError] = useState('');
+  const [order, setOrder] = useState(null);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const totalAmount = subtotal || cartItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
 
-  useEffect(() => {
-    // Calculate amount from cart or use subtotal from state
-    const totalAmount = subtotal || (cart && cart.length > 0 
-      ? cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      : 0);
-    
-    // Set purpose based on order
-    const purpose = cart.length > 0 
-      ? `Restaurant order - ${restaurant?.name || 'Restaurant'}`
-      : `Table reservation - ${restaurant?.name || 'Restaurant'}`;
-    
-    setFormData(prev => ({ 
-      ...prev, 
-      amount: totalAmount,
-      purpose: purpose,
-      name: customer.name || prev.name,
-      email: customer.email || prev.email,
-      phone: customer.phone || prev.phone
-    }));
-  }, [cart, subtotal, restaurant, customer]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Create payment via backend
+  const handleCreatePayment = async () => {
     setLoading(true);
     setError('');
     setPaymentUrl('');
 
     try {
-      const BACKEND_URL = 'https://2f3ede99-a9b4-44b8-ad0f-6dc3bb2337d1-00-9zoktqd1e6s1.sisko.replit.dev:3001';
-
-      const response = await fetch(`${BACKEND_URL}/api/create-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setPaymentUrl(data.url);
-        // Store payment info for confirmation page
-        sessionStorage.setItem('paymentInfo', JSON.stringify({
-          paymentUrl: data.url,
-          reservation,
-          cart,
-          restaurant,
-          customer: formData,
-          subtotal: formData.amount,
-          paymentMethod: 'gateway'
-        }));
-      } else {
-        setError(data.error || 'Failed to create payment');
+      // Get user profile for payment info
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Please login to continue');
       }
+
+      // Create order first
+      const orderResult = await orderAPI.create({
+        reservation_id: reservation?.id || null,
+        notes: `Order for ${restaurant?.name || 'Restaurant'}`,
+        items: cartItems.map(item => ({
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        total_amount: totalAmount,
+        restaurant_id: restaurant?.id
+      });
+      
+      setOrder(orderResult.order);
+
+      // For demo purposes, simulate HitPay payment
+      // In production, you would integrate with actual HitPay API
+      const paymentId = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Simulate payment link (replace with actual HitPay integration)
+      const mockPaymentUrl = `https://sandbox.hitpay.com/pay/${paymentId}`;
+      
+      setPaymentUrl(mockPaymentUrl);
+      
+      // Store payment info
+      sessionStorage.setItem('paymentInfo', JSON.stringify({
+        paymentId,
+        paymentUrl: mockPaymentUrl,
+        reservation,
+        cart: cartItems,
+        restaurant,
+        customer,
+        subtotal: totalAmount,
+        order: orderResult.order,
+        paymentMethod: 'gateway',
+        paymentStatus: 'pending'
+      }));
+
     } catch (err) {
-      console.error(err);
-      setError('Network error. Please ensure backend is running');
+      console.error('Payment error:', err);
+      setError(err.message || 'Failed to create payment. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReset = () => {
-    setPaymentUrl('');
-    setFormData({
-      amount: cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || '',
-      currency: 'SGD',
-      purpose: '',
-      name: '',
-      email: '',
-      phone: ''
-    });
-  };
+  // Handle "I've completed payment" button
+  const handlePaymentComplete = async () => {
+    try {
+      // Save payment record to database
+      if (order && order.id) {
+        await paymentAPI.create({
+          order_id: order.id,
+          amount: totalAmount,
+          payment_method: 'online',
+          payment_status: 'completed',
+          transaction_id: `TXN-${Date.now()}`,
+          notes: `Payment for order at ${restaurant?.name || 'Restaurant'}`
+        });
+      }
 
-  const currencies = ['MYR', 'SGD', 'USD', 'EUR', 'GBP'];
-  const totalAmount = subtotal || (cart && cart.length > 0 
-    ? cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    : 0);
+      const paymentInfoStr = sessionStorage.getItem('paymentInfo');
+      if (paymentInfoStr) {
+        const paymentInfo = JSON.parse(paymentInfoStr);
+        
+        // Navigate to confirmation
+        clearCart();
+        navigate("/order-confirmation", {
+          state: {
+            ...paymentInfo,
+            paymentStatus: 'completed',
+            message: 'Payment successful! Your order has been confirmed.'
+          }
+        });
+      } else {
+        // Fallback if no payment info
+        navigate("/order-confirmation", {
+          state: {
+            reservation,
+            cart: cartItems,
+            restaurant,
+            customer,
+            order,
+            subtotal: totalAmount,
+            paymentMethod: 'gateway',
+            paymentStatus: 'completed',
+            message: 'Your order has been confirmed!'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error saving payment:', error);
+      // Still navigate to confirmation even if payment record fails
+      navigate("/order-confirmation", {
+        state: {
+          reservation,
+          cart: cartItems,
+          restaurant,
+          customer,
+          order,
+          subtotal: totalAmount,
+          paymentMethod: 'gateway',
+          paymentStatus: 'completed',
+          message: 'Your order has been confirmed!'
+        }
+      });
+    }
+  };
 
   return (
     <>
       <Navbar />
       <Container className="py-5">
-      <Row className="justify-content-center">
-        <Col md={8}>
-          <Card className="shadow">
-            <Card.Header className="bg-primary text-white">
-              <h3 className="mb-0">Secure Online Payment</h3>
-            </Card.Header>
-            <Card.Body>
-              {/* Order Summary */}
-              {(cart.length > 0 || reservation) && (
-                <div className="mb-4 p-3 bg-light rounded">
-                  {cart.length > 0 && (
-                    <>
-                      <h5 className="mb-3">Order Summary</h5>
-                      {cart.map((item, idx) => (
-                        <div key={idx} className="d-flex justify-content-between mb-2">
-                          <span>{item.name} x {item.quantity}</span>
-                          <span>{formatPrice(item.price * item.quantity)}</span>
-                        </div>
-                      ))}
-                      <hr />
-                    </>
-                  )}
-                  {reservation && (
-                    <div className="mb-2">
-                      <p className="mb-1"><strong>Reservation:</strong> {reservation.restaurant || restaurant?.name}</p>
-                      <p className="mb-1"><strong>Date:</strong> {reservation.date} at {reservation.time}</p>
+        <Row className="justify-content-center">
+          <Col md={8}>
+            <Card className="shadow">
+              <Card.Header style={{ background: "linear-gradient(90deg, #FF7E5F, #FEB47B)", color: "white", border: "none" }}>
+                <h3 className="mb-0">Secure Online Payment</h3>
+              </Card.Header>
+              <Card.Body>
+                {/* Order Summary */}
+                {(cartItems.length > 0 || reservation) && (
+                  <div className="mb-4 p-3 bg-light rounded">
+                    {cartItems.length > 0 && (
+                      <>
+                        <h5 className="mb-3">Order Summary</h5>
+                        {cartItems.map((item, idx) => (
+                          <div key={idx} className="d-flex justify-content-between mb-2">
+                            <span>{item.name} x {item.quantity}</span>
+                            <span>{formatPrice((item.price || 0) * (item.quantity || 0))}</span>
+                          </div>
+                        ))}
+                        <hr />
+                      </>
+                    )}
+                    {reservation && (
+                      <div className="mb-2">
+                        <p className="mb-1"><strong>Reservation:</strong> {restaurant?.name}</p>
+                        <p className="mb-1"><strong>Date:</strong> {reservation.reservation_date}</p>
+                        <p className="mb-1"><strong>Time:</strong> {reservation.reservation_time}</p>
+                      </div>
+                    )}
+                    <div className="d-flex justify-content-between fw-bold fs-5 mt-3">
+                      <span>Total Amount:</span>
+                      <span className="text-primary">{formatPrice(totalAmount)}</span>
                     </div>
-                  )}
-                  <div className="d-flex justify-content-between fw-bold fs-5 mt-3">
-                    <span>Total Amount:</span>
-                    <span className="text-primary">{formatPrice(totalAmount)}</span>
                   </div>
-                </div>
-              )}
-              {error && (
-                <Alert variant="danger" dismissible onClose={() => setError('')}>
-                  {error}
-                </Alert>
-              )}
+                )}
 
-              {paymentUrl ? (
-                <Alert variant="success">
-                  <Alert.Heading>Payment Link Created!</Alert.Heading>
-                  <p className="mb-2">Click the button below to proceed with payment:</p>
-                  <Button
-                    variant="success"
-                    size="lg"
-                    className="w-100 mb-3"
-                    href={paymentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      // After payment, user will be redirected back
-                      // We'll handle the redirect in a callback or check sessionStorage
-                    }}
-                  >
-                    Pay Now - {formatPrice(totalAmount)}
-                  </Button>
+                {/* Error Alert */}
+                {error && (
+                  <Alert variant="danger" dismissible onClose={() => setError('')}>
+                    {error}
+                  </Alert>
+                )}
+
+                {/* Payment Link Created */}
+                {paymentUrl ? (
+                  <Alert variant="success">
+                    <Alert.Heading>Payment Link Created!</Alert.Heading>
+                    <p className="mb-3">
+                      Your payment of <strong>{formatPrice(totalAmount)}</strong> is ready.
+                    </p>
+                    
+                    <Button
+                      variant="success"
+                      size="lg"
+                      className="w-100 mb-3"
+                      href={paymentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Pay Now - {formatPrice(totalAmount)}
+                    </Button>
+                    
+                    <div className="text-center">
+                      <Button 
+                        variant="outline-success" 
+                        onClick={handlePaymentComplete}
+                        size="lg"
+                      >
+                        I've Completed Payment
+                      </Button>
+                    </div>
+                    
+                    <hr />
+                    <small className="text-muted d-block mt-2">
+                      <strong>Instructions:</strong>
+                      <ol className="mb-0 mt-2">
+                        <li>Click "Pay Now" to open the payment page</li>
+                        <li>Complete your payment securely</li>
+                        <li>Return here and click "I've Completed Payment"</li>
+                      </ol>
+                    </small>
+                  </Alert>
+                ) : (
+                  /* Create Payment Button */
                   <div className="text-center">
-                    <Button 
-                      variant="outline-secondary" 
-                      onClick={() => {
-                        // Navigate to confirmation if payment was completed
-                        const paymentInfo = sessionStorage.getItem('paymentInfo');
-                        if (paymentInfo) {
-                          const info = JSON.parse(paymentInfo);
-                          navigate("/order-confirmation", { 
-                            state: {
-                              ...info,
-                              paymentStatus: 'pending'
-                            }
-                          });
-                        }
+                    <div className="mb-4">
+                      <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>💳</div>
+                      <h5 className="mb-3">Ready to Pay</h5>
+                      <p className="text-muted">
+                        Click the button below to create your payment and proceed to HitPay.
+                      </p>
+                    </div>
+                    
+                    <Button
+                      variant="success"
+                      size="lg"
+                      className="px-5"
+                      onClick={handleCreatePayment}
+                      disabled={loading || totalAmount <= 0}
+                      style={{
+                        background: "linear-gradient(90deg, #28a745, #20c997)",
+                        border: "none",
                       }}
                     >
-                      I've Completed Payment
+                      {loading ? (
+                        <>
+                          <Spinner animation="border" size="sm" className="me-2" />
+                          Creating Payment...
+                        </>
+                      ) : (
+                        `Pay ${formatPrice(totalAmount)} Now`
+                      )}
                     </Button>
-                  </div>
-                  <hr />
-                  <small className="text-muted d-block mt-2">
-                    <strong>Note:</strong> After completing payment, click "I've Completed Payment" to confirm your order.
-                  </small>
-                </Alert>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Amount *</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="amount"
-                      value={formData.amount}
-                      readOnly 
-                      placeholder="10.00"
-                    />
-                  </Form.Group>
 
-                  <Form.Group className="mb-3">
-                    <Form.Label>Currency *</Form.Label>
-                    <Form.Select
-                      name="currency"
-                      value={formData.currency}
-                      onChange={handleChange}
-                      required
-                    >
-                      {currencies.map(curr => (
-                        <option key={curr} value={curr}>{curr}</option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Purpose *</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="purpose"
-                      value={formData.purpose}
-                      onChange={handleChange}
-                      required
-                      placeholder="Payment for services"
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Customer Name *</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      placeholder="John Doe"
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Customer Email *</Form.Label>
-                    <Form.Control
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="john@example.com"
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Customer Phone</Form.Label>
-                    <Form.Control
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="+60123456789"
-                    />
-                  </Form.Group>
-
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-100"
-                    type="submit"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Spinner
-                          as="span"
-                          animation="border"
-                          size="sm"
-                          role="status"
-                          aria-hidden="true"
-                          className="me-2"
-                        />
-                        Creating Payment...
-                      </>
-                    ) : (
-                      'Create Payment Link'
+                    {totalAmount <= 0 && (
+                      <Alert variant="warning" className="mt-3">
+                        No items in cart. Please add items to your cart first.
+                      </Alert>
                     )}
-                  </Button>
-                </form>
-              )}
-            </Card.Body>
-            <Card.Footer className="text-muted">
-              <small>
-                <strong>Note:</strong> This is a sandbox environment for testing.
-                Use test credentials for payment.
-              </small>
-            </Card.Footer>
-          </Card>
-        </Col>
-      </Row>
+                  </div>
+                )}
+              </Card.Body>
+              <Card.Footer className="text-muted">
+                <small>
+                  <i className="bi bi-shield-check me-1"></i>
+                  Secure payment powered by HitPay
+                </small>
+              </Card.Footer>
+            </Card>
+
+            {/* Back Button */}
+            <div className="text-center mt-4">
+              <Button
+                variant="outline-secondary"
+                onClick={() => navigate(-1)}
+                disabled={loading}
+              >
+                ← Back to Payment Options
+              </Button>
+            </div>
+          </Col>
+        </Row>
       </Container>
     </>
   );

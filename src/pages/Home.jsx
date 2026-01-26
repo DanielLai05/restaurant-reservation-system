@@ -3,10 +3,10 @@ import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context";
 import { AppContext } from "../context/AppContext.jsx";
-import { auth } from "../firebase";
 import Navbar from "../components/Navbar";
 import { useConfirmDialog } from "../components/ConfirmDialog";
 import { formatPrice } from "../utils/formatters";
+import { restaurantAPI } from "../services/api";
 
 import {
   Container,
@@ -17,62 +17,29 @@ import {
   Button,
   Form,
   InputGroup,
-  Carousel,
+  Spinner,
+  Alert,
 } from "react-bootstrap";
 
 import sushiImg from "../assets/restaurants/sushi.png";
 import pastaImg from "../assets/restaurants/pasta.png";
 import indianImg from "../assets/restaurants/indian.png";
 
-const restaurants = [
-  {
-    id: 1,
-    name: "Sushi Hana",
-    cuisine: "Japanese",
-    location: "KL",
-    image: sushiImg,
-    rating: 4.8,
-    popular: true,
-    discount: "10% Off",
-    priceRange: [20, 60],
-  },
-  {
-    id: 2,
-    name: "La Pasta",
-    cuisine: "Italian",
-    location: "PJ",
-    image: pastaImg,
-    rating: 4.3,
-    popular: false,
-    discount: null,
-    priceRange: [15, 50],
-  },
-  {
-    id: 3,
-    name: "Spice Route",
-    cuisine: "Indian",
-    location: "Subang Jaya",
-    image: indianImg,
-    rating: 4.6,
-    popular: true,
-    discount: "15% Off",
-    priceRange: [10, 40],
-  },
-  {
-    id: 4,
-    name: "168 Ban Mian",
-    cuisine: "Chinese",
-    location: "Kepong",
-    image: 'https://lh3.googleusercontent.com/gps-cs-s/AG0ilSxPgdA97GBJgiopGu5o1yzgtJbJsLMGOOeKvhJK0FJ-ydO7ZWbYn2wPwEC3M4Q6N_ciIyBa8Adsgho2_1gS1zOe9sQW8qFxh4usb2YgfdewPS0dzR18uB-hv60Q9AE8W7RTtHTC=s1360-w1360-h1020-rw',
-    rating: 5.0,
-    popular: true,
-    discount: "15% Off",
-    priceRange: [10, 40],
-  },
-];
-
-const cuisines = ["All", "Japanese", "Italian", "Indian"];
-const locations = ["All", "KL", "PJ", "Subang Jaya"];
+// Get static image for restaurant
+const getRestaurantImage = (restaurant) => {
+  if (restaurant.image_url) return restaurant.image_url;
+  
+  const name = (restaurant.name || '').toLowerCase();
+  if (name.includes('sushi') || name.includes('japanese')) {
+    return sushiImg;
+  } else if (name.includes('pasta') || name.includes('italian')) {
+    return pastaImg;
+  } else if (name.includes('indian') || name.includes('spice')) {
+    return indianImg;
+  }
+  
+  return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop&q=80';
+};
 
 export default function Home() {
   const { currentUser } = useContext(AuthContext);
@@ -82,193 +49,253 @@ export default function Home() {
 
   const [search, setSearch] = useState("");
   const [selectedCuisine, setSelectedCuisine] = useState("All");
-  const [selectedLocation, setSelectedLocation] = useState("All");
   const [priceRange, setPriceRange] = useState([0, 100]);
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!currentUser) navigate("/login");
   }, [currentUser, navigate]);
 
+  // Fetch restaurants from API
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await restaurantAPI.getAll();
+        setRestaurants(data);
+      } catch (err) {
+        console.error('Error fetching restaurants:', err);
+        setError('Failed to load restaurants. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurants();
+  }, []);
+
+  const cuisines = ["All", ...new Set(restaurants.map(r => r.cuisine_type).filter(Boolean))];
+
   const handleSelectRestaurant = async (r) => {
-    // Check if cart has items from a different restaurant
     if (cart.length > 0) {
-      // Get the restaurant ID from the first item in cart (format: "restaurantId-itemId")
       const firstCartItem = cart[0];
       const cartRestaurantId = firstCartItem.restaurantId || (firstCartItem.id ? parseInt(firstCartItem.id.split('-')[0]) : null);
-      
-      // If trying to select a different restaurant
+
       if (cartRestaurantId && cartRestaurantId !== r.id) {
-        const confirmed = await confirm({
-          title: "Different Restaurant",
-          message: `You have items from another restaurant in your cart. Would you like to clear your cart and start a new order at ${r.name}?`,
-          confirmText: "Clear & Continue",
-          cancelText: "Cancel",
-          variant: "warning"
-        });
-        
-        if (confirmed) {
-          clearCart();
-          setSelectedRestaurant(r);
-          navigate(`/restaurant-details/${r.id}`);
-        }
-        return; // Don't proceed if user cancels
+        confirm(
+          "Clear Cart?",
+          "Your cart contains items from another restaurant. Would you like to clear your cart?",
+          "Clear",
+          () => {
+            clearCart();
+            setSelectedRestaurant(r);
+            navigate(`/restaurant-details/${r.id}`);
+          }
+        );
+        return;
       }
     }
-    
+
     setSelectedRestaurant(r);
     navigate(`/restaurant-details/${r.id}`);
   };
 
-  // Filter logic
-  const filtered = restaurants.filter((r) => {
-    const matchesSearch =
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.cuisine.toLowerCase().includes(search.toLowerCase()) ||
-      r.location.toLowerCase().includes(search.toLowerCase());
-
-    const matchesCuisine = selectedCuisine === "All" || r.cuisine === selectedCuisine;
-    const matchesLocation = selectedLocation === "All" || r.location === selectedLocation;
-    const matchesPrice =
-      r.priceRange[0] >= priceRange[0] && r.priceRange[1] <= priceRange[1];
-
-    return matchesSearch && matchesCuisine && matchesLocation && matchesPrice;
+  // Filter restaurants based on search, cuisine, and price range
+  const filteredRestaurants = restaurants.filter((restaurant) => {
+    const matchesSearch = (restaurant.name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+                         (restaurant.cuisine_type?.toLowerCase() || '').includes(search.toLowerCase());
+    const matchesCuisine = selectedCuisine === "All" || restaurant.cuisine_type === selectedCuisine;
+    
+    // Simple price range check (based on estimated avg price)
+    const estimatedPrice = restaurant.price_range ? 
+      (restaurant.price_range[0] + restaurant.price_range[1]) / 2 : 30;
+    const matchesPrice = estimatedPrice >= priceRange[0] && estimatedPrice <= priceRange[1];
+    
+    return matchesSearch && matchesCuisine && matchesPrice;
   });
 
-  const recommended = restaurants.filter((r) => r.popular);
-
   return (
-    <div style={{ backgroundColor: "#F1F3F6", minHeight: "100vh" }}>
+    <>
       <Navbar />
       <ConfirmDialogComponent />
-      <Container className="py-5">
-        <div className="mb-4">
-          <h1 className="fw-bold">Discover Restaurants</h1>
-          <p className="text-muted">Find your perfect dining experience</p>
-        </div>
 
-        {/* Recommended Carousel */}
-        {recommended.length > 0 && (
-          <Carousel className="mb-4 shadow-sm rounded">
-            {recommended.map((r) => (
-              <Carousel.Item key={r.id}>
-                <div
-                  style={{
-                    height: "250px",
-                    background: `url('${r.image}') center/cover no-repeat`,
-                    borderRadius: "12px",
-                  }}
+      {/* Hero Section */}
+      <div
+        style={{
+          background: "linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)",
+          color: "white",
+          padding: "60px 0",
+          textAlign: "center",
+        }}
+      >
+        <Container>
+          <h1 style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "1rem" }}>
+            TempahNow
+          </h1>
+          <p style={{ fontSize: "1.25rem", marginBottom: "2rem", opacity: 0.9 }}>
+            Reserve tables and order food from your favorite restaurants
+          </p>
+
+          {/* Search Bar */}
+          <Row className="justify-content-center">
+            <Col md={8} lg={6}>
+              <InputGroup size="lg" className="shadow-sm">
+                <Form.Control
+                  placeholder="Search restaurants..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ border: "none", padding: "15px" }}
                 />
-                <Carousel.Caption>
-                  <h5>{r.name}</h5>
-                  <p>{r.cuisine} • {r.location} • ⭐ {r.rating}</p>
-                </Carousel.Caption>
-              </Carousel.Item>
-            ))}
-          </Carousel>
+                <Button
+                  variant="light"
+                  style={{ padding: "15px 30px", fontWeight: "bold" }}
+                >
+                  <i className="bi bi-search"></i>
+                </Button>
+              </InputGroup>
+            </Col>
+          </Row>
+        </Container>
+      </div>
+
+      {/* Filter Section */}
+      <Container className="my-4">
+        <Row className="align-items-center">
+          <Col md={6}>
+            <div className="d-flex gap-2 flex-wrap">
+              {cuisines.map((cuisine) => (
+                <Button
+                  key={cuisine}
+                  variant={selectedCuisine === cuisine ? "primary" : "outline-secondary"}
+                  onClick={() => setSelectedCuisine(cuisine)}
+                  style={{
+                    background: selectedCuisine === cuisine ? "linear-gradient(90deg, #FF7E5F, #FEB47B)" : undefined,
+                    border: "none",
+                  }}
+                >
+                  {cuisine}
+                </Button>
+              ))}
+            </div>
+          </Col>
+          <Col md={6} className="text-md-end mt-3 mt-md-0">
+            <span className="text-muted me-2">Showing</span>
+            <strong>{filteredRestaurants.length}</strong>
+            <span className="text-muted ms-1">restaurants</span>
+          </Col>
+        </Row>
+      </Container>
+
+      {/* Restaurant Grid */}
+      <Container className="pb-5">
+        {loading && (
+          <div className="text-center py-5">
+            <Spinner animation="border" variant="primary" />
+            <p className="mt-3 text-muted">Loading restaurants...</p>
+          </div>
         )}
 
-        {/* Search + Filter */}
-        <Row className="mb-4 g-2 align-items-center">
-          <Col md={4}>
-            <InputGroup>
-              <Form.Control
-                placeholder="Search by name, cuisine, location"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <Button variant="primary">Search</Button>
-            </InputGroup>
-          </Col>
-          <Col md={2}>
-            <Form.Select
-              value={selectedCuisine}
-              onChange={(e) => setSelectedCuisine(e.target.value)}
-            >
-              {cuisines.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </Form.Select>
-          </Col>
-          <Col md={2}>
-            <Form.Select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-            >
-              {locations.map((l) => (
-                <option key={l}>{l}</option>
-              ))}
-            </Form.Select>
-          </Col>
-          <Col md={4}>
-            <Form.Label>Price Range: {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}</Form.Label>
-            <Form.Range
-              min={0}
-              max={100}
-              value={priceRange[1]}
-              onChange={(e) => setPriceRange([0, Number(e.target.value)])}
-            />
-          </Col>
-        </Row>
+        {error && (
+          <Alert variant="danger" className="text-center">
+            {error}
+            <Button variant="link" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </Alert>
+        )}
 
-        {/* Restaurant Cards */}
-        <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-          {filtered.map((r) => (
-            <Col key={r.id}>
-              <Card
-                className="h-100 border-0"
-                style={{
-                  cursor: "pointer",
-                  borderRadius: "12px",
-                  transition: "transform 0.25s, box-shadow 0.25s",
-                }}
-                onClick={() => handleSelectRestaurant(r)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.03)";
-                  e.currentTarget.style.boxShadow = "0 6px 18px rgba(0,0,0,0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.08)";
-                }}
-              >
-                <div
+        {!loading && !error && filteredRestaurants.length === 0 && (
+          <div className="text-center py-5">
+            <i className="bi bi-search" style={{ fontSize: "3rem", color: "#ccc" }}></i>
+            <p className="mt-3 text-muted">No restaurants found matching your criteria</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <Row xs={1} sm={2} lg={4} className="g-4">
+            {filteredRestaurants.map((restaurant) => (
+              <Col key={restaurant.id}>
+                <Card
+                  className="h-100 cursor-pointer border-0 shadow-sm"
                   style={{
-                    background: `url('${r.image}') center/cover no-repeat`,
-                    height: "180px",
-                    borderTopLeftRadius: "12px",
-                    borderTopRightRadius: "12px",
+                    borderRadius: "16px",
+                    cursor: "pointer",
+                    transition: "transform 0.25s, box-shadow 0.25s",
                   }}
-                />
-                <Card.Body className="bg-white rounded-bottom shadow-sm">
-                  <Card.Title className="fw-bold">{r.name}</Card.Title>
-                  <div className="mb-1">
-                    <Badge bg="info" className="me-1">{r.cuisine}</Badge>
-                    <span className="text-muted small">{r.location}</span>
-                  </div>
-                  <div className="mb-1">
-                    <span className="text-warning">⭐ {r.rating}</span>{" "}
-                    {r.popular && <Badge bg="danger">Popular</Badge>}{" "}
-                    {r.discount && <Badge bg="success">{r.discount}</Badge>}
-                  </div>
-                  <Button
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.03)";
+                    e.currentTarget.style.boxShadow = "0 10px 20px rgba(0,0,0,0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.08)";
+                  }}
+                  onClick={() => handleSelectRestaurant(restaurant)}
+                >
+                  <div
                     style={{
-                      background: "linear-gradient(90deg, #FF7E5F, #FEB47B)",
-                      border: "none",
+                      background: `url('${getRestaurantImage(restaurant)}') center/cover no-repeat`,
+                      height: "180px",
+                      borderTopLeftRadius: "16px",
+                      borderTopRightRadius: "16px",
+                      position: "relative",
                     }}
-                    size="sm"
                   >
-                    View Details
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-
-        {filtered.length === 0 && (
-          <p className="text-center text-muted mt-5">No restaurants found.</p>
+                    {restaurant.discount && (
+                      <Badge
+                        bg="danger"
+                        style={{
+                          position: "absolute",
+                          top: "12px",
+                          right: "12px",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        {restaurant.discount}
+                      </Badge>
+                    )}
+                  </div>
+                  <Card.Body className="d-flex flex-column">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <Card.Title className="mb-0 fw-bold" style={{ fontSize: "1.1rem" }}>
+                        {restaurant.name}
+                      </Card.Title>
+                      {restaurant.rating && (
+                        <Badge bg="warning" text="dark" className="ms-2">
+                          <i className="bi bi-star-fill me-1"></i>
+                          {restaurant.rating}
+                        </Badge>
+                      )}
+                    </div>
+                    <Card.Text className="text-muted small mb-2">
+                      {restaurant.cuisine_type} • {restaurant.address?.split(',')[0] || restaurant.location}
+                    </Card.Text>
+                    <div className="d-flex align-items-center mt-auto">
+                      <Button
+                        variant="primary"
+                        className="flex-grow-1"
+                        style={{
+                          background: "linear-gradient(90deg, #FF7E5F, #FEB47B)",
+                          border: "none",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectRestaurant(restaurant);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
         )}
       </Container>
-    </div>
+    </>
   );
 }

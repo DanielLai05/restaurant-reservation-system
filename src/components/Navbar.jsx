@@ -121,6 +121,11 @@ export default function Navbar() {
                     <small className="text-muted">{currentUser.email}</small>
                   </Dropdown.ItemText>
                   <Dropdown.Divider />
+                  <Dropdown.Item onClick={() => { navigate("/my-reservations"); setExpanded(false); }}>
+                    <i className="bi bi-calendar-event me-2"></i>
+                    View My Reservations
+                  </Dropdown.Item>
+                  <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-2"></i>
                     Logout
