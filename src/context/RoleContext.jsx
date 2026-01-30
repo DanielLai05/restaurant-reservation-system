@@ -26,23 +26,34 @@ export default function RoleProvider({ children }) {
 
   // Load role from sessionStorage or localStorage on mount
   useEffect(() => {
-    const storedRole = sessionStorage.getItem('userRole');
-    const storedRestaurantId = sessionStorage.getItem('userRestaurantId');
-    const adminToken = localStorage.getItem('adminToken');
-    const staffToken = localStorage.getItem('staffToken');
-    
-    if (storedRole) {
-      setUserRole(storedRole);
-      if (storedRestaurantId) {
-        setUserRestaurantId(parseInt(storedRestaurantId));
+    const loadRole = () => {
+      const storedRole = sessionStorage.getItem('userRole');
+      const storedRestaurantId = sessionStorage.getItem('userRestaurantId');
+      const adminToken = localStorage.getItem('adminToken');
+      const staffToken = localStorage.getItem('staffToken');
+      
+      if (storedRole) {
+        setUserRole(storedRole);
+        if (storedRestaurantId) {
+          setUserRestaurantId(parseInt(storedRestaurantId));
+        }
+      } else if (adminToken) {
+        // Admin token exists but role not loaded yet
+        setUserRole('admin');
+      } else if (staffToken) {
+        // Staff token exists but role not loaded yet
+        setUserRole('staff');
       }
-    } else if (adminToken) {
-      // Admin token exists but role not loaded yet
-      setUserRole('admin');
-    } else if (staffToken) {
-      // Staff token exists but role not loaded yet
-      setUserRole('staff');
-    }
+    };
+
+    loadRole();
+
+    // Listen for storage changes (e.g., when user logs out in another tab)
+    window.addEventListener('storage', loadRole);
+    
+    return () => {
+      window.removeEventListener('storage', loadRole);
+    };
   }, []);
 
   return (

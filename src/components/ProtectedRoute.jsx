@@ -8,23 +8,22 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if we have stored tokens in localStorage/sessionStorage
+    // Check if we have stored tokens in localStorage
     const adminToken = localStorage.getItem('adminToken');
-    const storedRole = sessionStorage.getItem('userRole');
+    const staffToken = localStorage.getItem('staffToken');
     
     // If we have tokens but userRole is not set, consider it valid temporarily
-    // The actual API call will validate the token
-    if (adminToken || storedRole) {
+    if (adminToken || staffToken) {
       // Give time for RoleContext to initialize
       const timer = setTimeout(() => {
         setIsLoading(false);
-      }, 100);
+      }, 500);
       return () => clearTimeout(timer);
     }
     setIsLoading(false);
   }, [userRole]);
 
-  // If still loading, show a loading state or wait
+  // If still loading, show a loading state
   if (isLoading) {
     return (
       <div className="container my-5 text-center">
@@ -36,42 +35,46 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
     );
   }
 
-  // If no role is set and no adminToken, redirect to login
+  // If no role is set and no token, redirect to appropriate login
   if (!userRole) {
     const adminToken = localStorage.getItem('adminToken');
-    if (adminToken) {
-      // We have a token but RoleContext hasn't initialized yet
-      // Return children and let the actual page handle the API call
+    const staffToken = localStorage.getItem('staffToken');
+    
+    // We have a token but RoleContext hasn't initialized yet
+    // Return children and let the actual page handle the API call
+    if (adminToken || staffToken) {
       return children;
     }
     
-    // No token at all, redirect to login
+    // No token at all, redirect to appropriate login page
     if (requireAdmin) {
       return <Navigate to="/admin/login" replace />;
     }
-    return <Navigate to="/staff/login" replace />;
+    if (requireStaff) {
+      return <Navigate to="/staff/login" replace />;
+    }
+    // Default fallback
+    return <Navigate to="/login" replace />;
   }
 
   // If admin access is required but user is not admin
   if (requireAdmin && userRole !== 'admin') {
-    return (
-      <div className="container my-5 text-center">
-        <h3>Access Denied</h3>
-        <p>You need admin privileges to access this page.</p>
-        <a href="/admin/dashboard">Back to Dashboard</a>
-      </div>
-    );
+    // If user is staff, redirect to staff login
+    if (userRole === 'staff') {
+      return <Navigate to="/staff/dashboard" replace />;
+    }
+    // Otherwise redirect to admin login (guest user)
+    return <Navigate to="/admin/login" replace />;
   }
 
   // If staff access is required but user is not staff
   if (requireStaff && userRole !== 'staff') {
-    return (
-      <div className="container my-5 text-center">
-        <h3>Access Denied</h3>
-        <p>You need staff privileges to access this page.</p>
-        <a href="/staff/dashboard">Back to Dashboard</a>
-      </div>
-    );
+    // If user is admin, redirect to admin dashboard
+    if (userRole === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    // Otherwise redirect to staff login (guest user)
+    return <Navigate to="/staff/login" replace />;
   }
 
   return children;

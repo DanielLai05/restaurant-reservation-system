@@ -12,7 +12,7 @@ export default function HitPayCheckout() {
   const navigate = useNavigate();
   const { cart: contextCart, clearCart } = useContext(AppContext);
   const orderCreated = useRef(false); // Prevent duplicate order creation
-
+  
   // Get data from location state (passed from PaymentMethod)
   const state = location.state || {};
   const reservation = state.reservation || null;
@@ -20,7 +20,7 @@ export default function HitPayCheckout() {
   const restaurant = state.restaurant || {};
   const customer = state.customer || {};
   const subtotal = state.subtotal || 0;
-
+  
   const cart = stateCart.length > 0 ? stateCart : contextCart;
   const cartItems = cart.length > 0 ? cart : [];
   
