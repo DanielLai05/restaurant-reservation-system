@@ -110,15 +110,15 @@ export default function Reservation() {
     loadData();
   }, [location.state, searchParams]);
 
-  // Filter tables when pax changes
+  // Update available tables when pax changes (show ALL tables, mark insufficient as disabled)
   useEffect(() => {
     if (allTables.length === 0) {
       setAvailableTables([]);
       return;
     }
 
-    const filtered = allTables.filter(table => table.capacity === pax);
-    setAvailableTables(filtered);
+    // Show ALL tables - those with matching capacity are selectable
+    setAvailableTables(allTables);
     
     // Reset selected table if it's no longer available
     if (selectedTable && selectedTable.capacity !== pax) {
@@ -323,25 +323,47 @@ export default function Reservation() {
             <Card className="border-0 shadow-sm">
               <Card.Header className="bg-white">
                 <h5 className="mb-0">🪑 Select Your Table</h5>
-                <small className="text-muted">Click on a table to select it</small>
               </Card.Header>
               <Card.Body>
                 {/* Legend */}
-                <div className="mb-3 d-flex justify-content-center gap-3 flex-wrap">
-                  <span><span className="badge bg-success me-1">●</span> Available</span>
-                  <span><span className="badge bg-primary me-1">●</span> Selected</span>
-                  <span><span className="badge bg-secondary me-1">●</span> Too Small</span>
+                <div className="mb-4 d-flex justify-content-center gap-4 flex-wrap">
+                  <div className="d-flex align-items-center gap-2">
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '4px',
+                      background: 'white',
+                      border: '2px solid #e9ecef'
+                    }}></div>
+                    <small>Available</small>
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '4px',
+                      background: 'linear-gradient(135deg, #FF7E5F, #FEB47B)',
+                      border: '2px solid #FF7E5F'
+                    }}></div>
+                    <small>Selected</small>
+                  </div>
                 </div>
 
-                {availableTables.length === 0 ? (
+                {/* Check if there are any tables with matching capacity */}
+                {allTables.length === 0 ? (
                   <Alert variant="warning">
                     <Alert.Heading>No tables available</Alert.Heading>
-                    <p>There are no tables available for {pax} guests.</p>
-                    <p className="mb-0">Please reduce the party size.</p>
+                    <p className="mb-0">This restaurant has no tables configured.</p>
+                  </Alert>
+                ) : allTables.filter(t => t.capacity >= pax).length === 0 ? (
+                  <Alert variant="warning">
+                    <Alert.Heading>No tables available for {pax} guests</Alert.Heading>
+                    <p>There are no tables that can accommodate {pax} guests.</p>
+                    <p className="mb-0">Please increase the number of seats or try a different restaurant.</p>
                   </Alert>
                 ) : (
-                  /* Simple grid - all tables together with ID */
-                  <div className="d-flex justify-content-center gap-2 flex-wrap">
+                  /* Visual table layout - show ALL tables */
+                  <div className="d-flex justify-content-center gap-3 flex-wrap">
                     {availableTables.map(table => (
                       <TableCard 
                         key={table.id} 
@@ -406,13 +428,13 @@ export default function Reservation() {
 
                 {/* Selected Table */}
                 {selectedTable ? (
-                  <div className="mb-3 p-3 bg-success bg-opacity-10 rounded">
+                  <div className="mb-3 p-3 rounded" style={{ background: 'rgba(255, 126, 95, 0.1)' }}>
                     <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="text-success fw-bold">Selected Table</span>
-                      <span className="badge bg-success">#{selectedTable.id}</span>
+                      <span className="fw-bold" style={{ color: '#FF7E5F' }}>Selected Table</span>
+                      <span className="badge" style={{ background: 'linear-gradient(135deg, #FF7E5F, #FEB47B)' }}>#{selectedTable.id}</span>
                     </div>
                     <div className="d-flex justify-content-between">
-                      <span>🪑 Table {selectedTable.id}</span>
+                      <span>🪑 Table {selectedTable.table_name || selectedTable.id}</span>
                       <span>{selectedTable.capacity} seats</span>
                     </div>
                     {selectedTable.location && (
@@ -483,40 +505,127 @@ export default function Reservation() {
   );
 }
 
-// Table Selection Card Component
+// Table Selection Card Component - Visual Layout with seats around table
 function TableCard({ table, selectedTable, onSelect, pax }) {
   const isSelected = selectedTable?.id === table.id;
   const isNotMatch = table.capacity !== pax;
   
+  // Generate seat positions around the circle
+  const seatCount = table.capacity || 4;
+  const seats = [];
+  const radius = 40; // distance from center
+  const centerX = 60; // center X position
+  const centerY = 60; // center Y position
+  
+  for (let i = 0; i < seatCount; i++) {
+    const angle = (i * (360 / seatCount)) - 90; // Start from top
+    const rad = (angle * Math.PI) / 180;
+    const x = centerX + radius * Math.cos(rad);
+    const y = centerY + radius * Math.sin(rad);
+    seats.push({ x, y, angle });
+  }
+
   return (
     <div
       onClick={() => !isNotMatch && onSelect(table)}
       style={{
-        width: '75px',
-        height: '75px',
-        borderRadius: '10px',
+        width: '130px',
+        height: '130px',
+        borderRadius: '12px',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: isNotMatch ? 'not-allowed' : 'pointer',
         background: isSelected 
-          ? 'linear-gradient(135deg, #198754, #20c997)' 
+          ? 'linear-gradient(135deg, #FF7E5F, #FEB47B)' 
           : isNotMatch 
-            ? '#e9ecef' 
+            ? '#f1f3f5' 
             : 'white',
-        border: isSelected ? '3px solid #0d6efd' : '2px solid #dee2e6',
+        border: isSelected 
+          ? '3px solid #FF7E5F' 
+          : isNotMatch 
+            ? '2px dashed #dee2e6'
+            : '2px solid #e9ecef',
         color: isSelected ? 'white' : isNotMatch ? '#adb5bd' : '#212529',
         transition: 'all 0.2s ease',
-        transform: isSelected ? 'scale(1.08)' : 'scale(1)',
-        boxShadow: isSelected ? '0 4px 15px rgba(25, 135, 84, 0.4)' : 'none'
+        transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+        boxShadow: isSelected ? '0 4px 15px rgba(255, 126, 95, 0.3)' : 'none',
+        position: 'relative',
+        overflow: 'visible'
       }}
     >
-      <span style={{ fontSize: '1.3rem' }}>
-        {isNotMatch ? '🔒' : isSelected ? '✅' : '🪑'}
-      </span>
-      <span className="fw-bold" style={{ fontSize: '1rem' }}>Table {table.id}</span>
-      <span className="small">{table.capacity} seats</span>
+      {/* Seats around the table */}
+      {seats.map((seat, idx) => (
+        <div
+          key={idx}
+          style={{
+            position: 'absolute',
+            left: `${seat.x - 12}px`,
+            top: `${seat.y - 12}px`,
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: isSelected ? 'rgba(255,255,255,0.9)' : isNotMatch ? '#dee2e6' : '#FF7E5F',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            zIndex: 1,
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <span style={{ color: isSelected ? '#FF7E5F' : 'white', lineHeight: 1 }}>
+            👤
+          </span>
+        </div>
+      ))}
+
+      {/* Center circle with table info */}
+      <div style={{
+        width: '50px',
+        height: '50px',
+        borderRadius: '50%',
+        background: isSelected ? 'rgba(255,255,255,0.95)' : 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        zIndex: 2
+      }}>
+        <span style={{ 
+          fontSize: '1rem', 
+          fontWeight: 'bold',
+          color: isSelected ? '#FF7E5F' : '#495057',
+          lineHeight: 1
+        }}>
+          {table.table_name || `T${table.id}`}
+        </span>
+      </div>
+
+      {/* Selected checkmark */}
+      {isSelected && (
+        <div style={{
+          position: 'absolute',
+          top: '-4px',
+          right: '-4px',
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          background: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '12px',
+          color: '#FF7E5F',
+          fontWeight: 'bold',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          zIndex: 4
+        }}>
+          ✓
+        </div>
+      )}
     </div>
   );
 }
