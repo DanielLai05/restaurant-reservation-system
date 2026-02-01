@@ -127,6 +127,28 @@ export const reservationAPI = {
     }),
 };
 
+// ============ NOTIFICATION API ============
+export const notificationAPI = {
+  getNotifications: () => fetchWithAuth('/notifications'),
+
+  getNotificationCount: () => fetchWithAuth('/notifications/count'),
+
+  markNotificationRead: (notificationId) =>
+    fetchWithAuth(`/notifications/${notificationId}/read`, {
+      method: 'PUT',
+    }),
+
+  markAllNotificationsRead: () =>
+    fetchWithAuth('/notifications/read-all', {
+      method: 'PUT',
+    }),
+
+  deleteNotification: (notificationId) =>
+    fetchWithAuth(`/notifications/${notificationId}`, {
+      method: 'DELETE',
+    }),
+};
+
 // ============ CART API ============
 export const cartAPI = {
   getCart: () => fetchWithAuth('/cart'),
