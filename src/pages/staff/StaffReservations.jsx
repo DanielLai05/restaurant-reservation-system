@@ -68,7 +68,11 @@ export default function StaffReservations() {
       setLoading(true);
       setError(null);
       const data = await staffAPI.getReservations();
-      setReservations(data);
+      // Sort by created_at descending (newest first)
+      const sortedData = data.sort((a, b) =>
+        new Date(b.created_at) - new Date(a.created_at)
+      );
+      setReservations(sortedData);
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Error fetching reservations:', err);

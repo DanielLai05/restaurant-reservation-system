@@ -57,7 +57,11 @@ export default function MyReservations() {
           })
         ]);
 
-        setReservations(reservationsData || []);
+        // Sort reservations by created_at descending (newest first)
+        const sortedReservations = (reservationsData || []).sort((a, b) =>
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+        setReservations(sortedReservations);
         setOrders(ordersData || []);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -171,7 +175,11 @@ export default function MyReservations() {
         console.error('Error fetching reservations:', err);
         return [];
       });
-      setReservations(reservationsData || []);
+      // Sort by newest first
+      const sortedReservations = (reservationsData || []).sort((a, b) =>
+        new Date(b.created_at) - new Date(a.created_at)
+      );
+      setReservations(sortedReservations);
       // Show success modal
       setShowSuccessModal(true);
     } catch (err) {
@@ -202,7 +210,11 @@ export default function MyReservations() {
         console.error('Error fetching reservations:', err);
         return [];
       });
-      setReservations(reservationsData || []);
+      // Sort by newest first
+      const sortedReservations = (reservationsData || []).sort((a, b) =>
+        new Date(b.created_at) - new Date(a.created_at)
+      );
+      setReservations(sortedReservations);
       setShowWithdrawModal(false);
       // Show success modal
       setShowSuccessModal(true);
