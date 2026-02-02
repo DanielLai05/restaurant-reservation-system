@@ -94,13 +94,6 @@ export default function AdminLogin() {
                   )}
                 </Button>
               </Form>
-              
-              <div className="mt-4 p-3 bg-light rounded">
-                <small className="text-muted">
-                  <strong>Demo Admin:</strong><br />
-                  admin@restaurant.com / admin123
-                </small>
-              </div>
             </Card.Body>
           </Card>
         </Col>
