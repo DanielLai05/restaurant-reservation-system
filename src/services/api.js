@@ -82,8 +82,8 @@ export const restaurantAPI = {
   getItems: (restaurantId) =>
     fetchWithoutAuth(`/restaurants/${restaurantId}/items`),
 
-  getFloorPlan: (restaurantId) =>
-    fetchWithoutAuth(`/restaurants/${restaurantId}/floor-plan`),
+  getFloorPlan: (restaurantId, date = null, time = null) =>
+    fetchWithoutAuth(`/restaurants/${restaurantId}/floor-plan${date && time ? `?date=${date}&time=${time}` : ''}`),
 };
 
 // ============ MENU API ============

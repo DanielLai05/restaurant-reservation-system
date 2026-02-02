@@ -101,8 +101,8 @@ export default function Reservation() {
 
         setRestaurant(restaurantData);
 
-        // Fetch tables
-        const tablesData = await restaurantAPI.getFloorPlan(restaurantData.id);
+        // Fetch tables (with date/time if selected)
+        const tablesData = await restaurantAPI.getFloorPlan(restaurantData.id, date || null, time || null);
         setAllTables(tablesData || []);
         setAvailableTables(tablesData || []);
 
@@ -117,7 +117,35 @@ export default function Reservation() {
     loadData();
   }, [location.state, searchParams]);
 
-  // Update available tables when pax changes (show ALL tables, mark insufficient as disabled)
+  // Fetch tables when date or time changes
+  useEffect(() => {
+    const fetchTables = async () => {
+      if (!restaurant?.id || !date || !time) {
+        return;
+      }
+
+      try {
+        const tablesData = await restaurantAPI.getFloorPlan(restaurant.id, date, time);
+        setAllTables(tablesData || []);
+        
+        // Only keep tables that are still available
+        setAvailableTables(prev => {
+          const availableTables = tablesData || [];
+          // If selected table is no longer available, clear selection
+          if (selectedTable && !availableTables.find(t => t.id === selectedTable.id)) {
+            setSelectedTable(null);
+          }
+          return availableTables;
+        });
+      } catch (err) {
+        console.error('Error fetching tables:', err);
+      }
+    };
+
+    fetchTables();
+  }, [date, time, restaurant?.id]);
+
+  // Update available tables when pax changes
   useEffect(() => {
     if (allTables.length === 0) {
       setAvailableTables([]);
@@ -127,10 +155,8 @@ export default function Reservation() {
     // Show ALL tables - those with matching capacity are selectable
     setAvailableTables(allTables);
     
-    // Reset selected table if it's no longer available
-    if (selectedTable && selectedTable.capacity !== pax) {
-      setSelectedTable(null);
-    }
+    // Always deselect table when pax changes - user must select a new table
+    setSelectedTable(null);
   }, [pax, allTables]);
 
   const handleSelectTable = (table) => {
@@ -147,6 +173,18 @@ export default function Reservation() {
 
     if (!selectedTable) {
       showToast("Please select a table", "warning");
+      return;
+    }
+
+    // Double-check if table is still available before submitting
+    const availableTables = await restaurantAPI.getFloorPlan(restaurant.id, date, time);
+    const tableStillAvailable = availableTables.find(t => t.id === selectedTable.id);
+    
+    if (!tableStillAvailable) {
+      showToast("This table is no longer available for the selected time slot. Please select another table.", "warning");
+      setAvailableTables(availableTables || []);
+      setSelectedTable(null);
+      setSubmitting(false);
       return;
     }
 
@@ -199,11 +237,8 @@ export default function Reservation() {
   const today = new Date().toISOString().split("T")[0];
 
   // Generate time slots
-  const timeSlots = [];
-  for (let h = 11; h <= 21; h++) {
-    timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
-    timeSlots.push(`${h.toString().padStart(2, '0')}:30`);
-  }
+  // Time slots with 2-hour intervals
+  const timeSlots = ['11:00', '13:00', '15:00', '18:00', '20:00', '22:00'];
 
   if (loading) {
     return (
@@ -309,18 +344,18 @@ export default function Reservation() {
                   </Col>
                   
                   <Col md={4}>
-              <Form.Group className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>🕐 Time</Form.Label>
                       <Form.Select
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
                       >
                         <option value="">Select time</option>
                         {timeSlots.map(slot => (
                           <option key={slot} value={slot}>{slot}</option>
                         ))}
                       </Form.Select>
-              </Form.Group>
+                    </Form.Group>
                   </Col>
                 </Row>
               </Card.Body>
