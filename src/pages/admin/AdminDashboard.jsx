@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'MYR'
     }).format(amount || 0);
   };
 

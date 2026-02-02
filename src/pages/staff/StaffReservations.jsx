@@ -241,7 +241,7 @@ export default function StaffReservations() {
     if (!amount) return '$0.00';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'MYR'
     }).format(amount);
   };
 

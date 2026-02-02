@@ -277,6 +277,39 @@ export const staffAPI = {
     fetchStaffWithAuth(`/staff/notifications/${notificationId}`, {
       method: 'DELETE',
     }),
+
+  // Menu Management
+  getMenuCategories: () =>
+    fetchStaffWithAuth('/staff/menu/categories'),
+
+  addMenuCategory: (categoryData) =>
+    fetchStaffWithAuth('/staff/menu/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoryData),
+    }),
+
+  getMenuItems: () =>
+    fetchStaffWithAuth('/staff/menu/items'),
+
+  addMenuItem: (itemData) =>
+    fetchStaffWithAuth('/staff/menu/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData),
+    }),
+
+  updateMenuItem: (itemId, itemData) =>
+    fetchStaffWithAuth(`/staff/menu/items/${itemId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData),
+    }),
+
+  deleteMenuItem: (itemId) =>
+    fetchStaffWithAuth(`/staff/menu/items/${itemId}`, {
+      method: 'DELETE',
+    }),
 };
 
 // ============ ADMIN API ============

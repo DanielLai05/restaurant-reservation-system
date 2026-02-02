@@ -450,6 +450,39 @@ export default function StaffDashboard() {
             </Card.Body>
           </Card>
         </Col>
+
+        {/* Menu Management */}
+        <Col md={12}>
+          <Card className="shadow-sm h-100">
+            <Card.Header className="d-flex justify-content-between align-items-center bg-white">
+              <div className="d-flex align-items-center gap-2">
+                <span style={{ fontSize: '1.5rem' }}>🍽️</span>
+                <Card.Title className="mb-0">Menu Management</Card.Title>
+              </div>
+              <Button variant="primary" size="sm" onClick={() => navigate("/staff/menu")}>
+                Manage Menu
+              </Button>
+            </Card.Header>
+            <Card.Body className="text-center py-5">
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍽️</div>
+              <h5>Manage Your Restaurant Menu</h5>
+              <p className="text-muted">
+                Add categories and menu items for customers to browse and order.
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/staff/menu")}
+                style={{
+                  background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
+                  border: 'none'
+                }}
+              >
+                <i className="bi bi-plus-lg me-2"></i>
+                Add Menu Items
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
     </Container>
   );
