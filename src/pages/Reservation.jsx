@@ -344,18 +344,18 @@ export default function Reservation() {
                   </Col>
                   
                   <Col md={4}>
-                    <Form.Group className="mb-3">
+              <Form.Group className="mb-3">
                       <Form.Label>🕐 Time</Form.Label>
                       <Form.Select
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
                       >
                         <option value="">Select time</option>
                         {timeSlots.map(slot => (
                           <option key={slot} value={slot}>{slot}</option>
                         ))}
                       </Form.Select>
-                    </Form.Group>
+              </Form.Group>
                   </Col>
                 </Row>
               </Card.Body>

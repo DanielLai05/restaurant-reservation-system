@@ -1,5 +1,6 @@
 // API Service Layer - Centralized API calls to backend
-const API_BASE = 'http://localhost:3000/api';
+// Use environment variable in production, localhost for development
+const API_BASE = import.meta.env.VITE_API_URL
 
 // Helper function for authenticated requests
 async function fetchWithAuth(endpoint, options = {}) {
@@ -356,7 +357,8 @@ async function fetchAdminWithAuth(endpoint, options = {}) {
     try {
       const error = await response.json();
       errorMessage = error.error || error.message || `HTTP ${response.status}`;
-    } catch (e) {
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     }
     console.error(`API Error [${endpoint}]:`, errorMessage);
