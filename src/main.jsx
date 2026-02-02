@@ -8,7 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const faviconLink = document.createElement('link');
 faviconLink.rel = 'icon';
 faviconLink.type = 'image/svg+xml';
-faviconLink.href = new URL('./src/assets/tempah-now-logo.svg', window.location.origin).href;
+faviconLink.href = '/tempah-now-logo.svg';
 document.head.appendChild(faviconLink);
 
 createRoot(document.getElementById('root')).render(
