@@ -467,7 +467,7 @@ export default function StaffReservations() {
                     <td>{formatTime(res.reservation_time)}</td>
                     <td>{res.party_size} guests</td>
                     <td>
-                      <Badge bg="secondary">{res.table_name || `Table ${res.table_id}`}</Badge>
+                      <Badge bg="secondary">{res.table_number || `Table ${res.table_id}`}</Badge>
                     </td>
                     <td>{getStatusBadge(res.status)}</td>
                     <td>

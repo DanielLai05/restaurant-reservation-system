@@ -441,7 +441,7 @@ export default function Reservation() {
                       <span className="badge" style={{ background: 'linear-gradient(135deg, #FF7E5F, #FEB47B)' }}>#{selectedTable.id}</span>
                     </div>
                     <div className="d-flex justify-content-between">
-                      <span>🪑 Table {selectedTable.table_name || selectedTable.id}</span>
+                      <span>🪑 Table {selectedTable.table_number || selectedTable.id}</span>
                       <span>{selectedTable.capacity} seats</span>
                     </div>
                     {selectedTable.location && (
@@ -607,7 +607,7 @@ function TableCard({ table, selectedTable, onSelect, pax }) {
           color: isSelected ? '#FF7E5F' : '#495057',
           lineHeight: 1
         }}>
-          {table.table_name || `T${table.id}`}
+          {table.table_number || `T${table.id}`}
         </span>
       </div>
 

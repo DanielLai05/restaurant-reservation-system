@@ -20,6 +20,7 @@ import StaffOrders from "./pages/staff/StaffOrders";
 import StaffReservations from "./pages/staff/StaffReservations";
 import StaffAnalytics from "./pages/staff/StaffAnalytics";
 import StaffMenu from "./pages/staff/StaffMenu";
+import StaffTables from "./pages/staff/StaffTables";
 
 // Admin Portal
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -91,6 +92,14 @@ export default function App() {
               element={
                 <ProtectedRoute requireStaff={true}>
                   <StaffMenu />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/staff/tables" 
+              element={
+                <ProtectedRoute requireStaff={true}>
+                  <StaffTables />
                 </ProtectedRoute>
               } 
             />

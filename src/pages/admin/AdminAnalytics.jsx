@@ -310,7 +310,7 @@ export default function AdminAnalytics() {
                         <td>{formatDate(r.reservation_date)}</td>
                         <td>{formatTime(r.reservation_time)}</td>
                         <td>{r.party_size} guests</td>
-                        <td>{r.table_name || `Table ${r.table_id}`}</td>
+                        <td>{r.table_number || `Table ${r.table_id}`}</td>
                         <td>{getStatusBadge(r.status)}</td>
                       </tr>
                     ))}

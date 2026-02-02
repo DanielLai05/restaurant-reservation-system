@@ -310,6 +310,29 @@ export const staffAPI = {
     fetchStaffWithAuth(`/staff/menu/items/${itemId}`, {
       method: 'DELETE',
     }),
+
+  // Table Management
+  getTables: () =>
+    fetchStaffWithAuth('/staff/tables'),
+
+  addTable: (tableData) =>
+    fetchStaffWithAuth('/staff/tables', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tableData),
+    }),
+
+  updateTable: (tableId, tableData) =>
+    fetchStaffWithAuth(`/staff/tables/${tableId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tableData),
+    }),
+
+  deleteTable: (tableId) =>
+    fetchStaffWithAuth(`/staff/tables/${tableId}`, {
+      method: 'DELETE',
+    }),
 };
 
 // ============ ADMIN API ============
