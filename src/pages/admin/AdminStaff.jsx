@@ -1,6 +1,6 @@
 // AdminStaff.jsx - Staff Management for Admin
 import React, { useState, useEffect, useContext } from "react";
-import { Container, Row, Col, Card, Badge, Button, Modal, Form, Table, Spinner, Alert } from "react-bootstrap";
+import { Container, Row, Col, Card, Badge, Button, Modal, Form, Table, Spinner, Alert, InputGroup } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { RoleContext } from "../../context/RoleContext";
 import { adminAPI, restaurantAPI } from "../../services/api";
@@ -22,6 +22,7 @@ export default function AdminStaff() {
     role: "staff",
     restaurant_id: ""
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -297,12 +298,20 @@ export default function AdminStaff() {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Password {editingStaff ? '(leave blank to keep current)' : '*'}</Form.Label>
-                  <Form.Control
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    required={!editingStaff}
-                  />
+                  <InputGroup>
+                    <Form.Control
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      required={!editingStaff}
+                    />
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      <i className={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'}`}></i>
+                    </Button>
+                  </InputGroup>
                 </Form.Group>
               </Col>
             </Row>
