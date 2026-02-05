@@ -136,28 +136,7 @@ export default function StaffReservations() {
     return <Badge bg={variants[status] || 'secondary'} className="ms-1">{status}</Badge>;
   };
 
-  const getPaymentStatusBadge = (status) => {
-    const variants = {
-      paid: 'success',
-      unpaid: 'warning',
-      refunded: 'info'
-    };
-    return <Badge bg={variants[status] || 'secondary'}>{status || 'Unpaid'}</Badge>;
-  };
-
-  const getPaymentMethodBadge = (method) => {
-    if (!method) {
-      return <span className="text-muted">-</span>;
-    }
-    const methodColors = {
-      hitpay: 'primary',
-      cash: 'success',
-      online: 'info',
-      card: 'primary',
-      fpx: 'warning'
-    };
-    return <Badge bg={methodColors[method.toLowerCase()] || 'secondary'}>{method}</Badge>;
-  };
+  // Removed getPaymentStatusBadge and getPaymentMethodBadge - using inline badges instead
 
   // Custom modal handlers
   const openActionModal = (type, reservation, action) => {
@@ -495,12 +474,9 @@ export default function StaffReservations() {
                     </td>
                     <td>{getStatusBadge(res.status)}</td>
                     <td>
-                      <div className="d-flex flex-column gap-1">
-                        {getPaymentStatusBadge(res.payment_status)}
-                        {res.payment_method && (
-                          <small>{getPaymentMethodBadge(res.payment_method)}</small>
-                        )}
-                      </div>
+                      <Badge bg={res.payment_status === 'paid' ? 'success' : 'warning'}>
+                        {res.payment_status === 'paid' ? '✓ Paid' : 'Pay at Counter'}
+                      </Badge>
                     </td>
                     <td>
                       {res.status === 'pending' && (
@@ -595,11 +571,9 @@ export default function StaffReservations() {
                                     <span className="fw-bold">
                                       {formatCurrency(order.total_amount)}
                                     </span>
-                                    {order.payment_status && (
-                                      <Badge bg={order.payment_status === 'paid' ? 'success' : 'warning'}>
-                                        {order.payment_status === 'paid' ? '✓ Paid' : 'Unpaid'}
-                                      </Badge>
-                                    )}
+                                    <Badge bg={order.payment_status === 'paid' ? 'success' : 'warning'}>
+                                      {order.payment_status === 'paid' ? '✓ Paid' : 'Pay at Counter'}
+                                    </Badge>
                                   </div>
                                 </Card.Header>
                                 <Card.Body className="py-2">
