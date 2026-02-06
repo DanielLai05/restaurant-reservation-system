@@ -153,7 +153,7 @@ export default function AdminAnalytics() {
         <Col md={3}>
           <Card className="text-center shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
             <Card.Body>
-              <Card.Title className="small opacity-75">Total Reservations</Card.Title>
+              <Card.Title style={{ fontSize: '0.9rem', opacity: 0.9 }}>Total Reservations</Card.Title>
               <Card.Text className="display-4 fw-bold">{overview?.totalReservations || 0}</Card.Text>
             </Card.Body>
           </Card>
@@ -161,7 +161,7 @@ export default function AdminAnalytics() {
         <Col md={3}>
           <Card className="text-center shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
             <Card.Body>
-              <Card.Title className="small opacity-75">Total Orders</Card.Title>
+              <Card.Title style={{ fontSize: '0.9rem', opacity: 0.9 }}>Total Orders</Card.Title>
               <Card.Text className="display-4 fw-bold">{overview?.totalOrders || 0}</Card.Text>
             </Card.Body>
           </Card>
@@ -169,7 +169,7 @@ export default function AdminAnalytics() {
         <Col md={3}>
           <Card className="text-center shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
             <Card.Body>
-              <Card.Title className="small opacity-75">Total Revenue</Card.Title>
+              <Card.Title style={{ fontSize: '0.9rem', opacity: 0.9 }}>Total Revenue</Card.Title>
               <Card.Text className="display-4 fw-bold">{formatCurrency(overview?.totalRevenue)}</Card.Text>
             </Card.Body>
           </Card>
@@ -177,7 +177,7 @@ export default function AdminAnalytics() {
         <Col md={3}>
           <Card className="text-center shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: 'white' }}>
             <Card.Body>
-              <Card.Title className="small opacity-75">Avg Order Value</Card.Title>
+              <Card.Title style={{ fontSize: '0.9rem', opacity: 0.9 }}>Avg Order Value</Card.Title>
               <Card.Text className="display-4 fw-bold">{formatCurrency(overview?.averageOrderValue)}</Card.Text>
             </Card.Body>
           </Card>
@@ -277,8 +277,8 @@ export default function AdminAnalytics() {
           <Card className="shadow-sm">
             <Card.Header className="d-flex justify-content-between align-items-center">
               <Card.Title className="mb-0">📅 Recent Reservations</Card.Title>
-              <Button variant="link" size="sm" onClick={() => navigate("/admin/orders")}>
-                View All Orders →
+              <Button variant="link" size="sm" onClick={() => navigate("/admin/reservations")}>
+                View All Reservations →
               </Button>
             </Card.Header>
             <Card.Body>

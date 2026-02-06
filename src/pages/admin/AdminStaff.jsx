@@ -14,12 +14,13 @@ export default function AdminStaff() {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingStaff, setDeletingStaff] = useState(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     first_name: "",
     last_name: "",
-    role: "staff",
     restaurant_id: ""
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -72,7 +73,6 @@ export default function AdminStaff() {
         password: "",
         first_name: member.first_name || "",
         last_name: member.last_name || "",
-        role: member.role || "staff",
         restaurant_id: member.restaurant_id ? String(member.restaurant_id) : ""
       });
     } else {
@@ -82,7 +82,6 @@ export default function AdminStaff() {
         password: "",
         first_name: "",
         last_name: "",
-        role: "staff",
         restaurant_id: restaurants[0]?.id ? String(restaurants[0].id) : ""
       });
     }
@@ -94,6 +93,7 @@ export default function AdminStaff() {
     try {
       const submitData = {
         ...formData,
+        role: "staff",
         restaurant_id: parseInt(formData.restaurant_id)
       };
       
@@ -117,14 +117,19 @@ export default function AdminStaff() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this staff member?')) {
-      try {
-        await adminAPI.deleteStaff(id);
-        fetchData();
-      } catch (err) {
-        alert('Error: ' + (err.message || "Failed to delete staff"));
-      }
+  const handleDelete = (id) => {
+    setDeletingStaff(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await adminAPI.deleteStaff(deletingStaff);
+      setShowDeleteModal(false);
+      setDeletingStaff(null);
+      fetchData();
+    } catch (err) {
+      alert('Error: ' + (err.message || "Failed to delete staff"));
     }
   };
 
@@ -318,18 +323,6 @@ export default function AdminStaff() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Role *</Form.Label>
-                  <Form.Select
-                    value={formData.role}
-                    onChange={(e) => setFormData({...formData, role: e.target.value})}
-                    required
-                  >
-                    <option value="staff">Staff</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
                   <Form.Label>Restaurant *</Form.Label>
                   <Form.Select
                     value={formData.restaurant_id}
@@ -354,6 +347,28 @@ export default function AdminStaff() {
             </Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-exclamation-triangle text-danger me-2"></i>
+            Delete Staff Member
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to delete this staff member?</p>
+          <p className="text-muted mb-0">This action cannot be undone.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmDelete}>
+            Delete
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Container>
   );

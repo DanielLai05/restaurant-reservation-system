@@ -226,13 +226,21 @@ export default function LoginPage() {
               
               <Form.Group className='mt-3 mb-4'>
                 <Form.Label>Password</Form.Label>
-                <Form.Control
-                  value={loginPassword}
-                  placeholder='password'
-                  type='password'
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                />
+                <InputGroup>
+                  <Form.Control
+                    value={loginPassword}
+                    placeholder='password'
+                    type={showPassword ? 'text' : 'password'}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                  />
+                  <Button
+                    variant='outline-secondary'
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <i className={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'}`}></i>
+                  </Button>
+                </InputGroup>
               </Form.Group>
 
               <Button 
