@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Container,
@@ -14,9 +14,11 @@ import {
   InputGroup
 } from 'react-bootstrap'
 import { staffAPI } from '../../services/api'
+import { RoleContext } from '../../context/RoleContext'
 
 const StaffTables = () => {
   const navigate = useNavigate()
+  const { clearRole, userRole } = useContext(RoleContext)
   const [tables, setTables] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -48,6 +50,12 @@ const StaffTables = () => {
   useEffect(() => {
     fetchTables()
   }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('staffToken');
+    clearRole();
+    navigate("/staff/login");
+  };
 
   const handleSaveTable = async (e) => {
     e.preventDefault()
@@ -127,20 +135,28 @@ const StaffTables = () => {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
+          <Button variant="link" onClick={() => navigate("/staff/dashboard")} className="ps-0 mb-2">
+            ← Back to Dashboard
+          </Button>
           <h2 className="mb-1">Table Management</h2>
           <p className="text-muted mb-0">Manage your restaurant tables</p>
         </div>
-        <Button
-          variant="primary"
-          onClick={() => setShowAddModal(true)}
-          style={{
-            background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
-            border: 'none'
-          }}
-        >
-          <i className="bi bi-plus-lg me-2"></i>
-          Add New Table
-        </Button>
+        <div className="d-flex gap-2">
+          <Button
+            variant="primary"
+            onClick={() => setShowAddModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
+              border: 'none'
+            }}
+          >
+            <i className="bi bi-plus-lg me-2"></i>
+            Add New Table
+          </Button>
+          <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
+            Logout
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}
