@@ -91,7 +91,7 @@ export default function HitPayCheckout() {
         amount: totalAmount,
         customer_name: `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim(),
         customer_email: userProfile.email,
-        description: `Order at ${restaurant?.name || 'Restaurant'}`,
+        description: `${restaurant?.name || 'Restaurant'} - ${cartItems.map(item => `${item.name} x${item.quantity}`).join(', ')}`,
         reference_number: `ORD-${orderResult.order.id}-${Date.now()}`
       });
 
