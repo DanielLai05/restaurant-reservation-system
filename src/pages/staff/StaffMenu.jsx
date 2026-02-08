@@ -6,6 +6,7 @@ import { RoleContext } from "../../context/RoleContext";
 import { staffAPI } from "../../services/api";
 import { uploadImage } from "../../services/fileUpload";
 import { useToast, ToastProvider } from "../../components/Toast";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 
 export default function StaffMenu() {
   const navigate = useNavigate();
@@ -21,6 +22,10 @@ export default function StaffMenu() {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+
+  // Delete confirmation dialog
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   // Category form
   const [categoryName, setCategoryName] = useState("");
@@ -197,19 +202,26 @@ export default function StaffMenu() {
     }
   };
 
-  // Delete item
-  const handleDeleteItem = async (item) => {
-    if (!window.confirm(`Are you sure you want to delete "${item.item_name}"?`)) {
-      return;
-    }
+  // Open delete confirmation dialog
+  const handleDeleteClick = (item) => {
+    setItemToDelete(item);
+    setShowDeleteConfirm(true);
+  };
+
+  // Delete item (called from confirm dialog)
+  const handleDeleteItem = async () => {
+    if (!itemToDelete) return;
 
     try {
-      await staffAPI.deleteMenuItem(item.id);
+      await staffAPI.deleteMenuItem(itemToDelete.id);
       fetchMenuData();
       showToast("Item deleted successfully", "success");
     } catch (err) {
       console.error('Error deleting item:', err);
       alert(err.message || "Failed to delete item");
+    } finally {
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
     }
   };
 
@@ -442,7 +454,7 @@ export default function StaffMenu() {
                         <Button
                           variant="outline-danger"
                           size="sm"
-                          onClick={() => handleDeleteItem(item)}
+                          onClick={() => handleDeleteClick(item)}
                         >
                           <i className="bi bi-trash"></i>
                         </Button>
@@ -678,6 +690,24 @@ export default function StaffMenu() {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        show={showDeleteConfirm}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={handleDeleteItem}
+        title="Delete Menu Item"
+        message={
+          itemToDelete
+            ? `Are you sure you want to delete "${itemToDelete.item_name}"? This action cannot be undone.`
+            : "Are you sure you want to delete this item?"
+        }
+        confirmText="Delete"
+        confirmVariant="danger"
+      />
     </>
   );
 }
