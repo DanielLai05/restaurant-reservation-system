@@ -176,9 +176,6 @@ export default function StaffDashboard() {
 
   // Count total orders across all reservations
   const totalOrdersCount = reservations.reduce((sum, r) => sum + (r.orders?.length || 0), 0);
-  const pendingOrdersCount = reservations.reduce((sum, r) => {
-    return sum + (r.orders?.filter(o => ['pending', 'confirmed', 'preparing'].includes(o.status)).length || 0);
-  }, 0);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -388,8 +385,8 @@ export default function StaffDashboard() {
         <Col md={4}>
           <Card className="text-center shadow-sm h-100 border-0" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
             <Card.Body className="text-center">
-              <div className="display-4 fw-bold">{pendingOrdersCount}</div>
-              <div className="small opacity-75">Pending Orders</div>
+              <div className="display-4 fw-bold">{totalOrdersCount}</div>
+              <div className="small opacity-75">Orders</div>
             </Card.Body>
           </Card>
         </Col>

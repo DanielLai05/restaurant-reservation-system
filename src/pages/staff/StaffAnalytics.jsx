@@ -203,8 +203,8 @@ export default function StaffAnalytics() {
         <Col md={3}>
           <Card className="text-center shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
             <Card.Body>
-              <Card.Title className="small opacity-75">Pending Orders</Card.Title>
-              <Card.Text className="display-4 fw-bold">{stats?.pendingOrders || 0}</Card.Text>
+              <Card.Title className="small opacity-75">Orders</Card.Title>
+              <Card.Text className="display-4 fw-bold">{stats?.totalOrders || 0}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -364,7 +364,6 @@ export default function StaffAnalytics() {
                     <tr>
                       <th>Customer</th>
                       <th>Amount</th>
-                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -372,7 +371,6 @@ export default function StaffAnalytics() {
                       <tr key={o.id}>
                         <td>{o.customer_email || 'Unknown'}</td>
                         <td>{formatCurrency(o.total_amount)}</td>
-                        <td>{getStatusBadge(o.status)}</td>
                       </tr>
                     ))}
                   </tbody>

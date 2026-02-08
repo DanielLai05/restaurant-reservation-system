@@ -171,32 +171,26 @@ export default function AdminOrders() {
           </Card>
         </Col>
         <Col md={3}>
-          <Card className="text-center" style={{ borderTop: '4px solid #ffc107' }}>
+          <Card className="text-center">
             <Card.Body>
-              <Card.Title className="display-4 text-warning">
-                {orders.filter(o => o.status === 'pending').length}
-              </Card.Title>
-              <Card.Text>Pending</Card.Text>
+              <Card.Title className="display-4">{orders.length}</Card.Title>
+              <Card.Text>Orders</Card.Text>
             </Card.Body>
           </Card>
         </Col>
         <Col md={3}>
-          <Card className="text-center" style={{ borderTop: '4px solid #0d6efd' }}>
+          <Card className="text-center">
             <Card.Body>
-              <Card.Title className="display-4 text-primary">
-                {orders.filter(o => ['confirmed', 'preparing', 'ready'].includes(o.status)).length}
-              </Card.Title>
-              <Card.Text>In Progress</Card.Text>
+              <Card.Title className="display-4">{orders.length}</Card.Title>
+              <Card.Text>Orders</Card.Text>
             </Card.Body>
           </Card>
         </Col>
         <Col md={3}>
-          <Card className="text-center" style={{ borderTop: '4px solid #198754' }}>
+          <Card className="text-center">
             <Card.Body>
-              <Card.Title className="display-4 text-success">
-                {orders.filter(o => o.status === 'completed').length}
-              </Card.Title>
-              <Card.Text>Completed</Card.Text>
+              <Card.Title className="display-4">{orders.length}</Card.Title>
+              <Card.Text>Orders</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -217,8 +211,6 @@ export default function AdminOrders() {
                   <th>Customer</th>
                   <th>Restaurant</th>
                   <th>Amount</th>
-                  <th>Status</th>
-                  <th>Payment</th>
                   <th>Method</th>
                   <th>Date</th>
                 </tr>
@@ -230,8 +222,6 @@ export default function AdminOrders() {
                     <td>{o.customer_email || 'Unknown'}</td>
                     <td>{o.restaurant_name || 'Unknown'}</td>
                     <td>{formatCurrency(o.total_amount)}</td>
-                    <td>{getStatusBadge(o.status)}</td>
-                    <td>{getPaymentStatusBadge(o.payment_status)}</td>
                     <td>{getPaymentMethodBadge(o.payment_method)}</td>
                     <td><small>{formatDate(o.created_at)}</small></td>
                   </tr>

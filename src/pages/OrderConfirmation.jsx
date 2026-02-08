@@ -275,9 +275,6 @@ export default function OrderConfirmation() {
                 <Card.Body>
                   <p><strong>Order ID:</strong> #{order.id}</p>
                   <p><strong>Total:</strong> {safeFormatCurrency(order.total_amount)}</p>
-                  <p><strong>Status:</strong>
-                    <span className="badge bg-warning text-dark ms-2">{order.status || 'pending'}</span>
-                  </p>
                 </Card.Body>
               </Card>
             </Col>

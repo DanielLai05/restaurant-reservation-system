@@ -357,12 +357,6 @@ export default function MyReservations() {
                                 <div className="d-flex justify-content-between align-items-center mb-2">
                                   <div>
                                     <strong>Order #{order.id}</strong>
-                                    <span className="ms-2">
-                                      {getStatusBadge(order.status)}
-                                    </span>
-                                    <span className="ms-2">
-                                      {getPaymentStatusBadge(order.payment_status)}
-                                    </span>
                                   </div>
                                   <span className="fw-bold">
                                     {formatCurrency(parseFloat(order.total_amount) || 0)}
@@ -498,8 +492,6 @@ export default function MyReservations() {
                             )}
                           </td>
                           <td className="fw-bold">{formatCurrency(parseFloat(order.total_amount) || 0)}</td>
-                          <td>{getStatusBadge(order.status)}</td>
-                          <td>{getPaymentStatusBadge(order.payment_status)}</td>
                         </tr>
                       ))}
                   </tbody>

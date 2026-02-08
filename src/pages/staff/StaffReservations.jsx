@@ -565,15 +565,11 @@ export default function StaffReservations() {
                                 <Card.Header className="d-flex justify-content-between align-items-center py-2">
                                   <div>
                                     <strong>Order #{order.id}</strong>
-                                    {getOrderStatusBadge(order.status)}
                                   </div>
                                   <div className="d-flex align-items-center gap-2">
                                     <span className="fw-bold">
                                       {formatCurrency(order.total_amount)}
                                     </span>
-                                    <Badge bg={order.payment_status === 'paid' ? 'success' : 'warning'}>
-                                      {order.payment_status === 'paid' ? '✓ Paid' : 'Pay at Counter'}
-                                    </Badge>
                                   </div>
                                 </Card.Header>
                                 <Card.Body className="py-2">

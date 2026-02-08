@@ -11,7 +11,6 @@ export default function StaffOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("");
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Redirect if not staff
@@ -59,32 +58,6 @@ export default function StaffOrders() {
     }, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  // Filter orders by status
-  const filteredOrders = statusFilter
-    ? orders.filter(o => o.status === statusFilter)
-    : orders;
-
-  const getStatusBadge = (status) => {
-    const variants = {
-      pending: 'warning',
-      confirmed: 'info',
-      preparing: 'primary',
-      ready: 'success',
-      completed: 'secondary',
-      cancelled: 'danger'
-    };
-    return <Badge bg={variants[status] || 'secondary'}>{status}</Badge>;
-  };
-
-  const getPaymentStatusBadge = (status) => {
-    const variants = {
-      paid: 'success',
-      unpaid: 'warning',
-      refunded: 'info'
-    };
-    return <Badge bg={variants[status] || 'warning'}>{status || 'Pay at Counter'}</Badge>;
-  };
 
   const getPaymentMethodBadge = (method) => {
     if (!method) {
@@ -172,65 +145,6 @@ export default function StaffOrders() {
       {error && <Alert variant="danger">{error}</Alert>}
 
       {/* Status Filter */}
-      <div className="mb-4">
-        <span className="me-2">Status:</span>
-        <Button 
-          variant={statusFilter === "" ? "primary" : "outline-secondary"}
-          size="sm"
-          className="me-2"
-          onClick={() => setStatusFilter("")}
-        >
-          All ({orders.length})
-        </Button>
-        <Button 
-          variant={statusFilter === "pending" ? "primary" : "outline-secondary"}
-          size="sm"
-          className="me-2"
-          onClick={() => setStatusFilter("pending")}
-        >
-          Pending ({orders.filter(o => o.status === 'pending').length})
-        </Button>
-        <Button 
-          variant={statusFilter === "confirmed" ? "primary" : "outline-secondary"}
-          size="sm"
-          className="me-2"
-          onClick={() => setStatusFilter("confirmed")}
-        >
-          Confirmed ({orders.filter(o => o.status === 'confirmed').length})
-        </Button>
-        <Button 
-          variant={statusFilter === "preparing" ? "primary" : "outline-secondary"}
-          size="sm"
-          className="me-2"
-          onClick={() => setStatusFilter("preparing")}
-        >
-          Preparing ({orders.filter(o => o.status === 'preparing').length})
-        </Button>
-        <Button 
-          variant={statusFilter === "ready" ? "primary" : "outline-secondary"}
-          size="sm"
-          className="me-2"
-          onClick={() => setStatusFilter("ready")}
-        >
-          Ready ({orders.filter(o => o.status === 'ready').length})
-        </Button>
-        <Button 
-          variant={statusFilter === "completed" ? "primary" : "outline-secondary"}
-          size="sm"
-          className="me-2"
-          onClick={() => setStatusFilter("completed")}
-        >
-          Completed ({orders.filter(o => o.status === 'completed').length})
-        </Button>
-        <Button 
-          variant={statusFilter === "cancelled" ? "primary" : "outline-secondary"}
-          size="sm"
-          onClick={() => setStatusFilter("cancelled")}
-        >
-          Cancelled ({orders.filter(o => o.status === 'cancelled').length})
-        </Button>
-      </div>
-
       {/* Orders Summary */}
       <Row className="g-3 mb-4">
         <Col md={3}>
@@ -245,9 +159,9 @@ export default function StaffOrders() {
           <Card className="text-center h-100 bg-warning-subtle">
             <Card.Body>
               <Card.Title className="display-6">
-                {orders.filter(o => o.status === 'pending').length}
+                {orders.length}
               </Card.Title>
-              <Card.Text>Pending</Card.Text>
+              <Card.Text>Orders</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -255,9 +169,9 @@ export default function StaffOrders() {
           <Card className="text-center h-100 bg-primary-subtle">
             <Card.Body>
               <Card.Title className="display-6">
-                {orders.filter(o => ['confirmed', 'preparing', 'ready'].includes(o.status)).length}
+                {orders.length}
               </Card.Title>
-              <Card.Text>In Progress</Card.Text>
+              <Card.Text>Orders</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -265,9 +179,9 @@ export default function StaffOrders() {
           <Card className="text-center h-100 bg-success-subtle">
             <Card.Body>
               <Card.Title className="display-6">
-                {orders.filter(o => o.status === 'completed').length}
+                {orders.length}
               </Card.Title>
-              <Card.Text>Completed</Card.Text>
+              <Card.Text>Orders</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -281,9 +195,9 @@ export default function StaffOrders() {
       </div>
 
       {/* Orders Table */}
-      {filteredOrders.length === 0 ? (
+      {orders.length === 0 ? (
         <Alert variant="info">
-          No orders found {statusFilter && `with status "${statusFilter}"`}.
+          No orders found.
         </Alert>
       ) : (
         <Table striped bordered hover responsive>
@@ -295,14 +209,12 @@ export default function StaffOrders() {
               <th>Date</th>
               <th>Items</th>
               <th>Total</th>
-              <th>Status</th>
-              <th>Payment</th>
               <th>Method</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map(order => (
+            {orders.map(order => (
               <tr key={order.id}>
                 <td>#{order.id}</td>
                 <td>
@@ -319,8 +231,6 @@ export default function StaffOrders() {
                   <small>{order.items || order.item_count + ' items'}</small>
                 </td>
                 <td className="fw-semibold">${order.total_amount?.toFixed(2) || '0.00'}</td>
-                <td>{getStatusBadge(order.status)}</td>
-                <td>{getPaymentStatusBadge(order.payment_status)}</td>
                 <td>{getPaymentMethodBadge(order.payment_method)}</td>
                 <td>
                   {order.status === 'pending' && (
